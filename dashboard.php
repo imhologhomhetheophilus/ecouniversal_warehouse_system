@@ -288,7 +288,7 @@ $.get('dashboard_data.php', function(data){
     /* LOW STOCK */
     let low = '';
     (data.lowStock||[]).forEach(i=>{
-        low += `<p>${i.name} - ${i.qty} (${i.location})</p>`;
+        low += `<p style="color: red;"> low-Stock: ${i.name} - ${i.qty} (${i.location})</p>`;
     });
     $('#low-stock').html(low);
 

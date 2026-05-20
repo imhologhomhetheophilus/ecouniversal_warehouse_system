@@ -1,9 +1,9 @@
 <?php
+
 $host = 'mysql-chemcoursework.alwaysdata.net';
 $db   = 'chemcoursework_warehouse_system';
 $user = '435841_chemuser';
 $pass = 'jobjacob123@';
-$port = 3306;    
 $charset = 'utf8mb4';
 
 $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
@@ -16,7 +16,7 @@ $options = [
 
 try {
     $pdo = new PDO($dsn, $user, $pass, $options);
-} catch (\PDOException $e) {
+} catch (PDOException $e) {
     die("Database connection failed: " . $e->getMessage());
 }
 ?>

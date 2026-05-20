@@ -1,0 +1,26 @@
+CREATE DATABASE IF NOT EXISTS warehouse_system_v4;
+USE warehouse_system_v4;
+
+CREATE TABLE admin(
+id INT AUTO_INCREMENT PRIMARY KEY,
+username VARCHAR(50),
+password VARCHAR(255)
+);
+
+CREATE TABLE items(
+id INT AUTO_INCREMENT PRIMARY KEY,
+name VARCHAR(100),
+location VARCHAR(100),
+type VARCHAR(20),
+qty INT,
+image VARCHAR(255)
+);
+
+CREATE TABLE transfers(
+id INT AUTO_INCREMENT PRIMARY KEY,
+item VARCHAR(100),
+from_loc VARCHAR(100),
+to_loc VARCHAR(100),
+qty INT,
+date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

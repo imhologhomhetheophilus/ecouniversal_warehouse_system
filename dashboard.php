@@ -26,7 +26,7 @@ body{
     background:#f4f6f9;
 }
 
-/* HAMBURGER */
+/* MENU BUTTON */
 .menu-btn{
     display:block;
     position:fixed;
@@ -40,7 +40,7 @@ body{
     cursor:pointer;
 }
 
-/* SIDEBAR (MOBILE = HIDDEN OFF CANVAS) */
+/* SIDEBAR */
 .sidebar{
     position:fixed;
     top:0;
@@ -55,9 +55,7 @@ body{
     z-index:1500;
 }
 
-.sidebar.open{
-    left:0;
-}
+.sidebar.open{ left:0; }
 
 .sidebar h2{
     text-align:center;
@@ -91,9 +89,7 @@ body{
     z-index:1400;
 }
 
-.overlay.show{
-    display:block;
-}
+.overlay.show{ display:block; }
 
 /* MAIN */
 .main{
@@ -150,7 +146,7 @@ body{
     text-align:center;
 }
 
-/* CONTENT CARDS */
+/* CARD */
 .card{
     background:#fff;
     padding:15px;
@@ -158,20 +154,49 @@ body{
     margin-top:15px;
 }
 
-/* TABLE MOBILE FIX */
-table{
-    width:100%;
-    border-collapse:collapse;
-    min-width:600px;
-}
-
+/* TABLE WRAPPER */
 .table-wrapper{
     overflow-x:auto;
 }
 
-/* ACTION LINKS */
-a{
-    color:#007bff;
+/* TABLE */
+table{
+    width:100%;
+    border-collapse:collapse;
+    min-width:700px;
+}
+
+th, td{
+    border:1px solid #ddd;
+    padding:10px;
+    text-align:center;
+}
+
+/* IMAGE */
+.item-img{
+    width:45px;
+    height:45px;
+    object-fit:cover;
+    border-radius:6px;
+}
+
+/* ACTION BUTTONS */
+.btn{
+    display:inline-block;
+    padding:6px 10px;
+    border-radius:5px;
+    text-decoration:none;
+    font-size:12px;
+    margin:2px;
+    color:#fff;
+}
+
+.btn-edit{
+    background:#007bff;
+}
+
+.btn-delete{
+    background:#dc3545;
 }
 
 /* =========================
@@ -179,13 +204,9 @@ a{
 ========================= */
 @media(min-width:768px){
 
-    .menu-btn{
-        display:none;
-    }
+    .menu-btn{ display:none; }
 
-    .sidebar{
-        left:0;
-    }
+    .sidebar{ left:0; }
 
     .main{
         margin-left:240px;
@@ -203,24 +224,14 @@ a{
     }
 }
 
-.item-img{
-    width:45px;
-    height:45px;
-    object-fit:cover;
-}
-
 </style>
 </head>
 
 <body>
 
-<!-- MENU BUTTON -->
 <div class="menu-btn">☰ Menu</div>
-
-<!-- OVERLAY -->
 <div class="overlay"></div>
 
-<!-- SIDEBAR -->
 <div class="sidebar">
     <h2>Imhotech</h2>
     <a href="dashboard.php">Dashboard</a>
@@ -231,7 +242,6 @@ a{
     <a href="logout.php">Logout</a>
 </div>
 
-<!-- MAIN -->
 <div class="main">
 
 <div class="nav">
@@ -262,9 +272,7 @@ a{
 
 let dashboardData = { items: [], chart:{labels:[],data:[]} };
 
-/* -------------------
-   LOAD DATA
-------------------- */
+/* LOAD DATA */
 function loadDashboardData(){
 
 $.get('dashboard_data.php', function(data){
@@ -277,15 +285,24 @@ $.get('dashboard_data.php', function(data){
         <div class="summary-card"><h2>${data.totalQty||0}</h2><p>Total Qty</p></div>
     `);
 
+    /* LOW STOCK */
     let low = '';
     (data.lowStock||[]).forEach(i=>{
         low += `<p>${i.name} - ${i.qty} (${i.location})</p>`;
     });
     $('#low-stock').html(low);
 
+    /* INVENTORY (WITH EDIT + DELETE) */
     let inv = `<h3>Inventory</h3>
     <table>
-    <tr><th>Img</th><th>Name</th><th>Loc</th><th>Type</th><th>Qty</th></tr>`;
+    <tr>
+        <th>Img</th>
+        <th>Name</th>
+        <th>Loc</th>
+        <th>Type</th>
+        <th>Qty</th>
+        <th>Action</th>
+    </tr>`;
 
     (data.items||[]).forEach(i=>{
         inv += `<tr>
@@ -294,18 +311,24 @@ $.get('dashboard_data.php', function(data){
             <td>${i.location}</td>
             <td>${i.type}</td>
             <td>${i.qty}</td>
+            <td>
+                <a class="btn btn-edit" href="edit_item.php?id=${i.id}">Edit</a>
+                <a class="btn btn-delete" href="delete_item.php?id=${i.id}" onclick="return confirm('Delete this item?')">Delete</a>
+            </td>
         </tr>`;
     });
 
     inv += '</table>';
     $('#inventory-section').html(inv);
 
+    /* LOCATIONS */
     let loc = '<tr><th>Location</th><th>Total</th></tr>';
     (data.chart.labels||[]).forEach((l,i)=>{
         loc += `<tr><td>${l}</td><td>${data.chart.data[i]}</td></tr>`;
     });
     $('#locations-table').html(loc);
 
+    /* TRANSFERS */
     let t = `<h3>Transfers</h3><table>
     <tr><th>Item</th><th>From</th><th>To</th><th>Qty</th><th>Date</th></tr>`;
 
@@ -329,9 +352,7 @@ $.get('dashboard_data.php', function(data){
 loadDashboardData();
 setInterval(loadDashboardData,5000);
 
-/* -------------------
-   SEARCH
-------------------- */
+/* SEARCH */
 $('#search').on('input', function(){
 
 const term = this.value.toLowerCase();
@@ -357,9 +378,7 @@ box.show();
 
 });
 
-/* -------------------
-   MOBILE MENU
-------------------- */
+/* MENU */
 $('.menu-btn').on('click', function(){
     $('.sidebar').toggleClass('open');
     $('.overlay').toggleClass('show');

@@ -1,15 +1,25 @@
 <?php
 session_start();
-if(!isset($_SESSION['admin'])){ header("Location: login.php"); exit; }
+
 include 'config/db.php';
 
-$msg="";
+if (!isset($_SESSION['admin'])) {
+    header("Location: login.php");
+    exit;
+}
 
-if(isset($_POST['change'])){
+$msg = "";
+
+if (isset($_POST['change'])) {
+
     $user = $_SESSION['admin'];
     $new  = password_hash($_POST['new_password'], PASSWORD_DEFAULT);
 
-    if($conn->query("UPDATE admin SET password='$new' WHERE username='$user'")){
+    // PDO safe update
+    $stmt = $pdo->prepare("UPDATE admin SET password = ? WHERE username = ?");
+    $result = $stmt->execute([$new, $user]);
+
+    if ($result) {
         $msg = "Password changed successfully!";
     } else {
         $msg = "Error updating password!";
@@ -30,14 +40,12 @@ body{
     background:#f4f6f9;
 }
 
-/* Container */
 .container{
     max-width:450px;
     margin:60px auto;
     padding:20px;
 }
 
-/* Card */
 .card{
     background:#fff;
     padding:25px;
@@ -45,13 +53,11 @@ body{
     box-shadow:0 4px 20px rgba(0,0,0,0.1);
 }
 
-/* Title */
 h2{
     text-align:center;
     margin-bottom:20px;
 }
 
-/* Inputs */
 input{
     width:100%;
     padding:12px;
@@ -61,7 +67,6 @@ input{
     font-size:14px;
 }
 
-/* Button */
 button{
     width:100%;
     padding:12px;
@@ -79,14 +84,12 @@ button:hover{
     background:#0056b3;
 }
 
-/* Message */
 .msg{
     text-align:center;
     margin-top:10px;
     color:green;
 }
 
-/* Back button */
 .back-btn{
     display:block;
     text-align:center;
@@ -103,7 +106,6 @@ button:hover{
     background:#555;
 }
 
-/* Responsive */
 @media(max-width:500px){
     .container{
         margin:20px;
@@ -117,20 +119,21 @@ button:hover{
 
 <div class="container">
 
-    <!-- Back to Dashboard -->
     <a href="dashboard.php" class="back-btn">⬅ Back to Dashboard</a>
 
     <div class="card">
+
         <h2>Change Password</h2>
 
         <form method="post">
             <input type="password" name="new_password" placeholder="Enter New Password" required>
-            <button name="change">Change Password</button>
+            <button type="submit" name="change">Change Password</button>
         </form>
 
-        <?php if($msg): ?>
+        <?php if ($msg): ?>
             <p class="msg"><?php echo $msg; ?></p>
         <?php endif; ?>
+
     </div>
 
 </div>

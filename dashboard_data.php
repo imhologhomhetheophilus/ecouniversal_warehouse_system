@@ -1,57 +1,93 @@
 <?php
 session_start();
-if(!isset($_SESSION['admin'])){ exit(json_encode(['error'=>'Not logged in'])); }
-include 'config/db.php';
-header('Content-Type: application/json');
 
-// Fetch items
-$items=[];
-$res = $conn->query("SELECT * FROM items ORDER BY name ASC");
-while($row = $res->fetch_assoc()){
-    $items[] = $row;
+if (!isset($_SESSION['admin'])) {
+    echo json_encode(['error' => 'Not logged in']);
+    exit;
 }
 
-// Low stock
+include 'config/db.php';
+
+header('Content-Type: application/json');
+
+/* -------------------------
+   Fetch items
+--------------------------*/
+$stmt = $pdo->query("SELECT * FROM items ORDER BY name ASC");
+$items = $stmt->fetchAll();
+
+/* -------------------------
+   Low stock
+--------------------------*/
 $lowStock = [];
-foreach($items as $item){
-    if($item['qty'] < 10){
+
+foreach ($items as $item) {
+    if ((int)$item['qty'] < 10) {
         $lowStock[] = $item;
     }
 }
 
-// Locations summary
-$locations = [];
-$locRes = $conn->query("SELECT location, SUM(qty) as totalQty FROM items GROUP BY location");
-$chart = ['labels'=>[], 'data'=>[]];
-while($row = $locRes->fetch_assoc()){
+/* -------------------------
+   Location summary (chart)
+--------------------------*/
+$stmt = $pdo->query("
+    SELECT location, SUM(qty) AS totalQty
+    FROM items
+    GROUP BY location
+");
+
+$chart = [
+    'labels' => [],
+    'data' => []
+];
+
+while ($row = $stmt->fetch()) {
     $chart['labels'][] = $row['location'];
     $chart['data'][] = (int)$row['totalQty'];
 }
 
-// Recent transfers
-$transfers = [];
-$tranRes = $conn->query("SELECT * FROM transfers ORDER BY date DESC LIMIT 1000");
-while($row = $tranRes->fetch_assoc()){
-    $transfers[] = $row;
-}
+/* -------------------------
+   Recent transfers
+--------------------------*/
+$stmt = $pdo->query("
+    SELECT * FROM transfers
+    ORDER BY date DESC
+    LIMIT 1000
+");
 
-// Summary
+$transfers = $stmt->fetchAll();
+
+/* -------------------------
+   Summary calculations
+--------------------------*/
 $totalQty = 0;
 $totalWarehouses = 0;
 $totalShops = 0;
-foreach($chart['labels'] as $loc){
-    if(stripos($loc,'warehouse')!==false) $totalWarehouses++;
-    if(stripos($loc,'shop')!==false) $totalShops++;
-}
-foreach($items as $item){ $totalQty += (int)$item['qty']; }
 
+foreach ($items as $item) {
+    $totalQty += (int)$item['qty'];
+
+    if (stripos($item['location'], 'warehouse') !== false) {
+        $totalWarehouses++;
+    }
+
+    if (stripos($item['location'], 'shop') !== false) {
+        $totalShops++;
+    }
+}
+
+/* -------------------------
+   Return JSON response
+--------------------------*/
 echo json_encode([
-    'items'=>$items,
-    'lowStock'=>$lowStock,
-    'chart'=>$chart,
-    'transfers'=>$transfers,
-    'totalQty'=>$totalQty,
-    'totalWarehouses'=>$totalWarehouses,
-    'totalShops'=>$totalShops
+    'items' => $items,
+    'lowStock' => $lowStock,
+    'chart' => $chart,
+    'transfers' => $transfers,
+    'totalQty' => $totalQty,
+    'totalWarehouses' => $totalWarehouses,
+    'totalShops' => $totalShops
 ]);
+
 exit;
+?>

@@ -1,10 +1,20 @@
 <?php
 session_start();
-if(!isset($_SESSION['admin'])){ header("Location: login.php"); exit; }
+
+if (!isset($_SESSION['admin'])) {
+    header("Location: login.php");
+    exit;
+}
+
 include 'config/db.php';
 
-$transfers = $conn->query("SELECT * FROM transfers ORDER BY date DESC");
+/* -------------------------
+   Fetch transfers (PDO)
+--------------------------*/
+$stmt = $pdo->query("SELECT * FROM transfers ORDER BY date DESC");
+$transfers = $stmt->fetchAll();
 ?>
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -18,14 +28,12 @@ body {
     margin: 0;
 }
 
-/* Container */
 .container {
     max-width: 1000px;
     margin: 40px auto;
     padding: 20px;
 }
 
-/* Back button */
 .back-btn {
     display: inline-block;
     margin-bottom: 20px;
@@ -34,19 +42,17 @@ body {
     padding: 10px 15px;
     border-radius: 6px;
     text-decoration: none;
-    transition: 0.3s;
 }
+
 .back-btn:hover {
     background: #555;
 }
 
-/* Title */
 h2 {
     text-align: center;
     margin-bottom: 20px;
 }
 
-/* Table wrapper */
 .table-wrapper {
     overflow-x: auto;
     background: #fff;
@@ -55,7 +61,6 @@ h2 {
     box-shadow: 0 4px 20px rgba(0,0,0,0.1);
 }
 
-/* Table */
 table {
     width: 100%;
     border-collapse: collapse;
@@ -66,7 +71,6 @@ th, td {
     border: 1px solid #ddd;
     padding: 12px;
     text-align: center;
-    font-size: 0.95em;
 }
 
 th {
@@ -82,7 +86,7 @@ tr:hover {
     background: #e9f2ff;
 }
 
-/* Mobile cards */
+/* Mobile */
 @media(max-width:600px){
     table, thead, tbody, th, td, tr {
         display: block;
@@ -99,7 +103,6 @@ tr:hover {
         border-radius: 8px;
         padding: 10px;
         background: #fff;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     }
 
     td {
@@ -112,7 +115,6 @@ tr:hover {
         content: attr(data-label);
         position: absolute;
         left: 10px;
-        width: 45%;
         font-weight: bold;
         text-align: left;
     }
@@ -120,39 +122,44 @@ tr:hover {
 </style>
 
 </head>
+
 <body>
 
 <div class="container">
 
-    <!-- Back Button -->
-    <a href="dashboard.php" class="back-btn">⬅ Back to Dashboard</a>
+<a href="dashboard.php" class="back-btn">⬅ Back to Dashboard</a>
 
-    <h2>Transfer History</h2>
+<h2>Transfer History</h2>
 
-    <div class="table-wrapper">
-        <table>
-            <thead>
-                <tr>
-                    <th>Item</th>
-                    <th>From</th>
-                    <th>To</th>
-                    <th>Qty</th>
-                    <th>Date</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php while($t=$transfers->fetch_assoc()): ?>
-                <tr>
-                    <td data-label="Item"><?=$t['item']?></td>
-                    <td data-label="From"><?=$t['from_loc']?></td>
-                    <td data-label="To"><?=$t['to_loc']?></td>
-                    <td data-label="Qty"><?=$t['qty']?></td>
-                    <td data-label="Date"><?=$t['date']?></td>
-                </tr>
-                <?php endwhile; ?>
-            </tbody>
-        </table>
-    </div>
+<div class="table-wrapper">
+
+<table>
+<thead>
+<tr>
+    <th>Item</th>
+    <th>From</th>
+    <th>To</th>
+    <th>Qty</th>
+    <th>Date</th>
+</tr>
+</thead>
+
+<tbody>
+
+<?php foreach ($transfers as $t): ?>
+<tr>
+    <td data-label="Item"><?= htmlspecialchars($t['item']) ?></td>
+    <td data-label="From"><?= htmlspecialchars($t['from_loc']) ?></td>
+    <td data-label="To"><?= htmlspecialchars($t['to_loc']) ?></td>
+    <td data-label="Qty"><?= (int)$t['qty'] ?></td>
+    <td data-label="Date"><?= htmlspecialchars($t['date']) ?></td>
+</tr>
+<?php endforeach; ?>
+
+</tbody>
+</table>
+
+</div>
 
 </div>
 

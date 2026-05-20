@@ -1,5 +1,4 @@
-CREATE DATABASE IF NOT EXISTS warehouse_system;
-USE warehouse_system;
+
 
 CREATE TABLE admin(
 id INT AUTO_INCREMENT PRIMARY KEY,

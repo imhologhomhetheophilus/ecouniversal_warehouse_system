@@ -1,44 +1,74 @@
 <?php
 session_start();
 
+header('Content-Type: application/json; charset=utf-8');
+
+/* --------------------------
+   Auth guard
+--------------------------*/
 if (!isset($_SESSION['admin'])) {
-    header("HTTP/1.1 403 Forbidden");
-    echo json_encode([]);
+    http_response_code(403);
+    echo json_encode([
+        'error' => 'Forbidden',
+        'data' => []
+    ]);
     exit;
 }
 
 include 'config/db.php';
 
-header('Content-Type: application/json');
-
+/* --------------------------
+   Get search query safely
+--------------------------*/
 $q = isset($_GET['q']) ? trim($_GET['q']) : '';
 
-$results = [];
-
-if ($q !== '') {
-
-    $search = "%$q%";
-
-    $stmt = $pdo->prepare("
-        SELECT * FROM items
-        WHERE name LIKE ?
-           OR location LIKE ?
-        ORDER BY location, name
-        LIMIT 10
-    ");
-
-    $stmt->execute([$search, $search]);
-
-    while ($row = $stmt->fetch()) {
-        $results[] = [
-            'name' => $row['name'],
-            'location' => $row['location'],
-            'qty' => (int)$row['qty'],
-            'image' => $row['image'] ?? ''
-        ];
-    }
+if ($q === '') {
+    echo json_encode([]);
+    exit;
 }
 
-echo json_encode($results);
+/* --------------------------
+   Prepare search pattern
+--------------------------*/
+$search = "%{$q}%";
+
+/* --------------------------
+   Query database (safe)
+--------------------------*/
+$stmt = $pdo->prepare("
+    SELECT id, name, location, qty, image
+    FROM items
+    WHERE name LIKE ?
+       OR location LIKE ?
+    ORDER BY location ASC, name ASC
+    LIMIT 10
+");
+
+$stmt->execute([$search, $search]);
+
+/* --------------------------
+   Build response
+--------------------------*/
+$results = [];
+
+while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+
+    $results[] = [
+        'id'       => (int)$row['id'],
+        'name'     => $row['name'],
+        'location' => $row['location'],
+        'qty'      => (int)$row['qty'],
+        'image'    => $row['image'] ?: null
+    ];
+}
+
+/* --------------------------
+   Output JSON
+--------------------------*/
+echo json_encode([
+    'count' => count($results),
+    'data'  => $results
+], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
 exit;
 ?>

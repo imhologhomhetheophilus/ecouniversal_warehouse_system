@@ -13,98 +13,212 @@ if (!isset($_SESSION['admin'])) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Dashboard</title>
 
-<!-- FIX: jQuery missing -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <style>
-body{margin:0;font-family:Arial,sans-serif;background:#f4f6f9;}
 
+/* =========================
+   BASE (MOBILE FIRST)
+========================= */
+body{
+    margin:0;
+    font-family:Arial,sans-serif;
+    background:#f4f6f9;
+}
+
+/* HAMBURGER */
+.menu-btn{
+    display:block;
+    position:fixed;
+    top:10px;
+    left:10px;
+    z-index:2000;
+    background:#222;
+    color:#fff;
+    padding:10px 12px;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+/* SIDEBAR (MOBILE = HIDDEN OFF CANVAS) */
 .sidebar{
-    width:200px;background:#222;color:#fff;height:100vh;
-    position:fixed;padding:20px;overflow:auto;
+    position:fixed;
+    top:0;
+    left:-260px;
+    width:220px;
+    height:100vh;
+    background:#222;
+    color:#fff;
+    padding:20px;
+    overflow:auto;
+    transition:0.3s;
+    z-index:1500;
+}
+
+.sidebar.open{
+    left:0;
 }
 
 .sidebar h2{
-    text-align:center;margin-bottom:30px;font-size:1.6rem;
+    text-align:center;
+    margin-bottom:20px;
+    font-size:1.4rem;
 }
 
 .sidebar a{
-    display:block;color:#ccc;margin:10px 0;
-    text-decoration:none;padding:10px;border-radius:4px;
+    display:block;
+    color:#ccc;
+    margin:10px 0;
+    text-decoration:none;
+    padding:10px;
+    border-radius:4px;
 }
 
-.sidebar a:hover{background:#007bff;color:#fff;}
+.sidebar a:hover{
+    background:#007bff;
+    color:#fff;
+}
 
+/* OVERLAY */
+.overlay{
+    display:none;
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.4);
+    z-index:1400;
+}
+
+.overlay.show{
+    display:block;
+}
+
+/* MAIN */
 .main{
-    margin-left:240px;padding:30px;
+    margin:0;
+    padding:15px;
 }
 
+/* NAV */
 .nav{
-    display:flex;justify-content:space-between;align-items:center;
-    margin-bottom:30px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    margin-top:40px;
 }
 
 .search-container{
-    position:relative;width:100%;max-width:400px;
+    position:relative;
+    width:100%;
 }
 
 #search{
-    width:100%;padding:10px;border-radius:5px;border:1px solid #ccc;
+    width:100%;
+    padding:10px;
+    border-radius:6px;
+    border:1px solid #ccc;
 }
 
+/* DROPDOWN */
 #search-dropdown{
-    position:absolute;top:100%;left:0;right:0;
-    background:#fff;border:1px solid #ccc;
-    max-height:250px;overflow-y:auto;display:none;
+    position:absolute;
+    top:100%;
+    left:0;
+    right:0;
+    background:#fff;
+    border:1px solid #ddd;
+    max-height:250px;
+    overflow:auto;
+    display:none;
     z-index:999;
 }
 
-#search-dropdown div{
-    padding:10px;cursor:pointer;border-bottom:1px solid #eee;
-}
-
-#search-dropdown div:hover{background:#f1f1f1;}
-
+/* CARDS */
 .summary-cards{
     display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-    gap:20px;
-    margin-bottom:30px;
+    grid-template-columns:1fr;
+    gap:15px;
+    margin-top:15px;
 }
 
 .summary-card{
-    background:#fff;padding:20px;border-radius:10px;
+    background:#fff;
+    padding:15px;
+    border-radius:10px;
     text-align:center;
 }
 
-.summary-card h2{
-    font-size:2rem;color:#007bff;margin:0;
-}
-
+/* CONTENT CARDS */
 .card{
-    background:#fff;padding:20px;border-radius:10px;
-    margin-bottom:20px;
+    background:#fff;
+    padding:15px;
+    border-radius:10px;
+    margin-top:15px;
 }
 
+/* TABLE MOBILE FIX */
 table{
     width:100%;
     border-collapse:collapse;
+    min-width:600px;
 }
 
-th,td{
-    border:1px solid #ddd;
-    padding:10px;
-    text-align:center;
+.table-wrapper{
+    overflow-x:auto;
+}
+
+/* ACTION LINKS */
+a{
+    color:#007bff;
+}
+
+/* =========================
+   DESKTOP
+========================= */
+@media(min-width:768px){
+
+    .menu-btn{
+        display:none;
+    }
+
+    .sidebar{
+        left:0;
+    }
+
+    .main{
+        margin-left:240px;
+        padding:30px;
+    }
+
+    .nav{
+        flex-direction:row;
+        justify-content:space-between;
+        align-items:center;
+    }
+
+    .summary-cards{
+        grid-template-columns:repeat(3,1fr);
+    }
 }
 
 .item-img{
-    width:50px;height:50px;object-fit:cover;
+    width:45px;
+    height:45px;
+    object-fit:cover;
 }
 
 </style>
 </head>
 
 <body>
+
+<!-- MENU BUTTON -->
+<div class="menu-btn">☰ Menu</div>
+
+<!-- OVERLAY -->
+<div class="overlay"></div>
 
 <!-- SIDEBAR -->
 <div class="sidebar">
@@ -129,160 +243,132 @@ th,td{
     </div>
 </div>
 
-<!-- SUMMARY -->
 <div class="summary-cards" id="summary-cards"></div>
 
-<!-- LOW STOCK -->
 <div class="card" id="low-stock"></div>
 
-<!-- INVENTORY -->
-<div class="card" id="inventory-section"></div>
+<div class="card table-wrapper" id="inventory-section"></div>
 
-<!-- LOCATIONS -->
-<div class="card">
+<div class="card table-wrapper">
     <h3>Locations</h3>
     <table id="locations-table"></table>
 </div>
 
-<!-- TRANSFERS -->
-<div class="card" id="recent-transfers"></div>
+<div class="card table-wrapper" id="recent-transfers"></div>
 
 </div>
 
 <script>
 
-let dashboardData = {
-    items: [],
-    chart: {labels:[], data:[]},
-    transfers: [],
-    lowStock: []
-};
+let dashboardData = { items: [], chart:{labels:[],data:[]} };
 
+/* -------------------
+   LOAD DATA
+------------------- */
 function loadDashboardData(){
 
-    $.get('dashboard_data.php', function(data){
+$.get('dashboard_data.php', function(data){
 
-        dashboardData = data || dashboardData;
+    dashboardData = data || dashboardData;
 
-        const items = data.items || [];
-        const chart = data.chart || {labels:[], data:[]};
-        const transfers = data.transfers || [];
-        const lowStock = data.lowStock || [];
+    $('#summary-cards').html(`
+        <div class="summary-card"><h2>${data.totalWarehouses||0}</h2><p>Warehouses</p></div>
+        <div class="summary-card"><h2>${data.totalShops||0}</h2><p>Shops</p></div>
+        <div class="summary-card"><h2>${data.totalQty||0}</h2><p>Total Qty</p></div>
+    `);
 
-        // SUMMARY
-        $('#summary-cards').html(`
-            <div class="summary-card"><h2>${data.totalWarehouses || 0}</h2><p>Warehouses</p></div>
-            <div class="summary-card"><h2>${data.totalShops || 0}</h2><p>Shops</p></div>
-            <div class="summary-card"><h2>${data.totalQty || 0}</h2><p>Total Qty</p></div>
-        `);
-
-        // LOW STOCK
-        let lowHtml = '';
-        if(lowStock.length){
-            lowHtml += '<h3 style="color:red;">Low Stock</h3>';
-            lowStock.forEach(i=>{
-                lowHtml += `<p>${i.name} - ${i.qty} left (${i.location})</p>`;
-            });
-        }
-        $('#low-stock').html(lowHtml);
-
-        // INVENTORY
-        let inv = '<h3>Inventory</h3><table><tr><th>Image</th><th>Name</th><th>Location</th><th>Type</th><th>Qty</th><th>Action</th></tr>';
-
-        items.forEach(i=>{
-            inv += `
-                <tr>
-                    <td>${i.image ? `<img src="${i.image}" class="item-img">` : ''}</td>
-                    <td>${i.name}</td>
-                    <td>${i.location}</td>
-                    <td>${i.type}</td>
-                    <td>${i.qty}</td>
-                    <td>
-                        <a href="edit_item.php?id=${i.id}">Edit</a>
-                        <a href="delete_item.php?id=${i.id}" onclick="return confirm('Delete?')">Delete</a>
-                    </td>
-                </tr>
-            `;
-        });
-
-        inv += '</table>';
-        $('#inventory-section').html(inv);
-
-        // LOCATIONS
-        let loc = '<tr><th>Location</th><th>Total</th></tr>';
-
-        (chart.labels || []).forEach((l,i)=>{
-            loc += `<tr><td>${l}</td><td>${chart.data[i] || 0}</td></tr>`;
-        });
-
-        $('#locations-table').html(loc);
-
-        // TRANSFERS
-        let t = '<h3>Transfers</h3><table><tr><th>Item</th><th>From</th><th>To</th><th>Qty</th><th>Date</th></tr>';
-
-        transfers.forEach(x=>{
-            t += `<tr>
-                <td>${x.item}</td>
-                <td>${x.from_loc}</td>
-                <td>${x.to_loc}</td>
-                <td>${x.qty}</td>
-                <td>${x.date}</td>
-            </tr>`;
-        });
-
-        t += '</table>';
-        $('#recent-transfers').html(t);
-
-    }, 'json').fail(err=>{
-        console.log("API Error:", err.responseText);
+    let low = '';
+    (data.lowStock||[]).forEach(i=>{
+        low += `<p>${i.name} - ${i.qty} (${i.location})</p>`;
     });
+    $('#low-stock').html(low);
+
+    let inv = `<h3>Inventory</h3>
+    <table>
+    <tr><th>Img</th><th>Name</th><th>Loc</th><th>Type</th><th>Qty</th></tr>`;
+
+    (data.items||[]).forEach(i=>{
+        inv += `<tr>
+            <td>${i.image ? `<img class="item-img" src="${i.image}">` : ''}</td>
+            <td>${i.name}</td>
+            <td>${i.location}</td>
+            <td>${i.type}</td>
+            <td>${i.qty}</td>
+        </tr>`;
+    });
+
+    inv += '</table>';
+    $('#inventory-section').html(inv);
+
+    let loc = '<tr><th>Location</th><th>Total</th></tr>';
+    (data.chart.labels||[]).forEach((l,i)=>{
+        loc += `<tr><td>${l}</td><td>${data.chart.data[i]}</td></tr>`;
+    });
+    $('#locations-table').html(loc);
+
+    let t = `<h3>Transfers</h3><table>
+    <tr><th>Item</th><th>From</th><th>To</th><th>Qty</th><th>Date</th></tr>`;
+
+    (data.transfers||[]).forEach(x=>{
+        t += `<tr>
+            <td>${x.item}</td>
+            <td>${x.from_loc}</td>
+            <td>${x.to_loc}</td>
+            <td>${x.qty}</td>
+            <td>${x.date}</td>
+        </tr>`;
+    });
+
+    t += '</table>';
+    $('#recent-transfers').html(t);
+
+});
+
 }
 
-// SEARCH
+loadDashboardData();
+setInterval(loadDashboardData,5000);
+
+/* -------------------
+   SEARCH
+------------------- */
 $('#search').on('input', function(){
 
-    const term = $(this).val().toLowerCase();
-    const box = $('#search-dropdown');
+const term = this.value.toLowerCase();
+const box = $('#search-dropdown');
 
-    if(!term){
-        box.hide();
-        return;
-    }
+if(!term){
+    box.hide();
+    return;
+}
 
-    const results = dashboardData.items.filter(i =>
-        i.name.toLowerCase().includes(term) ||
-        i.location.toLowerCase().includes(term)
-    );
+const res = dashboardData.items.filter(i =>
+    i.name.toLowerCase().includes(term) ||
+    i.location.toLowerCase().includes(term)
+);
 
-    box.html('');
+box.html('');
 
-    if(!results.length){
-        box.html('<div>No results</div>').show();
-        return;
-    }
-
-    results.forEach(i=>{
-        box.append(`
-            <div>
-                <strong>${i.name}</strong><br>
-                <small>${i.location} | ${i.qty}</small>
-            </div>
-        `);
-    });
-
-    box.show();
+res.forEach(i=>{
+    box.append(`<div><b>${i.name}</b><br><small>${i.location}</small></div>`);
 });
 
-// CLICK OUTSIDE
-$(document).click(function(e){
-    if(!$(e.target).closest('#search').length){
-        $('#search-dropdown').hide();
-    }
+box.show();
+
 });
 
-// INIT
-loadDashboardData();
-setInterval(loadDashboardData, 5000);
+/* -------------------
+   MOBILE MENU
+------------------- */
+$('.menu-btn').on('click', function(){
+    $('.sidebar').toggleClass('open');
+    $('.overlay').toggleClass('show');
+});
+
+$('.overlay').on('click', function(){
+    $('.sidebar').removeClass('open');
+    $(this).removeClass('show');
+});
 
 </script>
 <script>

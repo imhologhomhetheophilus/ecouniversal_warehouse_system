@@ -8,9 +8,6 @@ if (!isset($_SESSION['admin'])) {
 
 include 'config/db.php';
 
-/* -------------------------
-   Fetch transfers (PDO)
---------------------------*/
 $stmt = $pdo->query("SELECT * FROM transfers ORDER BY date DESC");
 $transfers = $stmt->fetchAll();
 ?>
@@ -22,103 +19,116 @@ $transfers = $stmt->fetchAll();
 <title>Transfer History</title>
 
 <style>
+
+/* ======================
+   MOBILE FIRST BASE
+====================== */
+
 body {
+    margin: 0;
     font-family: Arial, sans-serif;
     background: #f4f6f9;
-    margin: 0;
 }
 
 .container {
-    max-width: 1000px;
-    margin: 40px auto;
-    padding: 20px;
+    width: 100%;
+    padding: 16px;
+    max-width: 1100px;
+    margin: auto;
 }
 
-.back-btn {
-    display: inline-block;
-    margin-bottom: 20px;
-    background: #333;
-    color: #fff;
-    padding: 10px 15px;
-    border-radius: 6px;
-    text-decoration: none;
-}
-
-.back-btn:hover {
-    background: #555;
-}
-
+/* Header */
 h2 {
     text-align: center;
-    margin-bottom: 20px;
+    margin: 15px 0;
+    font-size: 1.4rem;
 }
 
-.table-wrapper {
-    overflow-x: auto;
-    background: #fff;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    min-width: 600px;
-}
-
-th, td {
-    border: 1px solid #ddd;
-    padding: 12px;
-    text-align: center;
-}
-
-th {
-    background: #007bff;
+/* Back button */
+.back-btn {
+    display: inline-block;
+    background: #333;
     color: #fff;
+    padding: 10px 14px;
+    border-radius: 6px;
+    text-decoration: none;
+    margin-bottom: 15px;
+    font-size: 0.95rem;
 }
 
-tr:nth-child(even) {
-    background: #f9f9f9;
+/* ======================
+   MOBILE CARD LAYOUT
+====================== */
+
+.transfer-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
 }
 
-tr:hover {
-    background: #e9f2ff;
+/* Each record becomes a card */
+.card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
 }
 
-/* Mobile */
-@media(max-width:600px){
-    table, thead, tbody, th, td, tr {
-        display: block;
+.card-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid #eee;
+    font-size: 0.95rem;
+}
+
+.card-row:last-child {
+    border-bottom: none;
+}
+
+.label {
+    font-weight: bold;
+    color: #555;
+}
+
+/* ======================
+   DESKTOP ENHANCEMENT
+====================== */
+
+@media (min-width: 768px) {
+
+    h2 {
+        font-size: 1.8rem;
+    }
+
+    .transfer-list {
+        display: none; /* hide cards */
+    }
+
+    table {
         width: 100%;
-    }
-
-    thead {
-        display: none;
-    }
-
-    tr {
-        margin-bottom: 15px;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        padding: 10px;
+        border-collapse: collapse;
         background: #fff;
+        border-radius: 10px;
+        overflow: hidden;
     }
 
-    td {
-        text-align: right;
-        padding-left: 50%;
-        position: relative;
+    th, td {
+        padding: 12px;
+        text-align: center;
+        border-bottom: 1px solid #eee;
     }
 
-    td::before {
-        content: attr(data-label);
-        position: absolute;
-        left: 10px;
-        font-weight: bold;
-        text-align: left;
+    th {
+        background: #007bff;
+        color: #fff;
+    }
+
+    tr:hover {
+        background: #f1f7ff;
     }
 }
+
 </style>
 
 </head>
@@ -131,9 +141,44 @@ tr:hover {
 
 <h2>Transfer History</h2>
 
-<div class="table-wrapper">
+<!-- ================= MOBILE VIEW ================= -->
+<div class="transfer-list">
 
-<table>
+<?php foreach ($transfers as $t): ?>
+<div class="card">
+
+    <div class="card-row">
+        <span class="label">Item</span>
+        <span><?= htmlspecialchars($t['item']) ?></span>
+    </div>
+
+    <div class="card-row">
+        <span class="label">From</span>
+        <span><?= htmlspecialchars($t['from_loc']) ?></span>
+    </div>
+
+    <div class="card-row">
+        <span class="label">To</span>
+        <span><?= htmlspecialchars($t['to_loc']) ?></span>
+    </div>
+
+    <div class="card-row">
+        <span class="label">Qty</span>
+        <span><?= (int)$t['qty'] ?></span>
+    </div>
+
+    <div class="card-row">
+        <span class="label">Date</span>
+        <span><?= htmlspecialchars($t['date']) ?></span>
+    </div>
+
+</div>
+<?php endforeach; ?>
+
+</div>
+
+<!-- ================= DESKTOP TABLE ================= -->
+<table class="desktop-table">
 <thead>
 <tr>
     <th>Item</th>
@@ -145,21 +190,17 @@ tr:hover {
 </thead>
 
 <tbody>
-
 <?php foreach ($transfers as $t): ?>
 <tr>
-    <td data-label="Item"><?= htmlspecialchars($t['item']) ?></td>
-    <td data-label="From"><?= htmlspecialchars($t['from_loc']) ?></td>
-    <td data-label="To"><?= htmlspecialchars($t['to_loc']) ?></td>
-    <td data-label="Qty"><?= (int)$t['qty'] ?></td>
-    <td data-label="Date"><?= htmlspecialchars($t['date']) ?></td>
+    <td><?= htmlspecialchars($t['item']) ?></td>
+    <td><?= htmlspecialchars($t['from_loc']) ?></td>
+    <td><?= htmlspecialchars($t['to_loc']) ?></td>
+    <td><?= (int)$t['qty'] ?></td>
+    <td><?= htmlspecialchars($t['date']) ?></td>
 </tr>
 <?php endforeach; ?>
-
 </tbody>
 </table>
-
-</div>
 
 </div>
 

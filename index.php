@@ -8,13 +8,11 @@ if ($_SERVER['REQUEST_METHOD'] == "POST") {
     $username = trim($_POST['username']);
     $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
 
-    // Check if admin already exists
     $check = $pdo->query("SELECT COUNT(*) FROM admin");
     $count = $check->fetchColumn();
 
     if ($count == 0) {
 
-        // Insert admin safely using prepared statement
         $stmt = $pdo->prepare("INSERT INTO admin (username, password) VALUES (?, ?)");
         $stmt->execute([$username, $password]);
 
@@ -30,51 +28,110 @@ if ($_SERVER['REQUEST_METHOD'] == "POST") {
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ImhoTech System</title>
+<title>Create Admin</title>
 
 <style>
+
+/* =========================
+   MOBILE FIRST DESIGN
+========================= */
+
 body{
-    font-family: Arial;
-    background:#f4f4f4;
+    margin:0;
+    font-family:Arial;
+    background:#f4f6f9;
     display:flex;
     align-items:center;
     justify-content:center;
-    height:100vh;
-    margin:0;
+    min-height:100vh;
+    padding:15px;
 }
 
+/* card */
 .card{
-    background:#fff;
-    padding:30px;
-    width:350px;
-    border-radius:8px;
-    box-shadow:0 0 10px rgba(0,0,0,0.2);
-}
-
-input,button{
     width:100%;
-    padding:10px;
-    margin-top:10px;
-    outline:none;
+    max-width:380px;
+    background:#fff;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 2px 12px rgba(0,0,0,0.08);
 }
 
+/* title */
+h2{
+    text-align:center;
+    margin-bottom:15px;
+    font-size:1.4rem;
+}
+
+/* inputs */
+input{
+    width:100%;
+    padding:14px;
+    margin-top:10px;
+    border-radius:8px;
+    border:1px solid #ddd;
+    font-size:1rem;
+    box-sizing:border-box;
+}
+
+/* button */
 button{
+    width:100%;
+    padding:14px;
+    margin-top:15px;
+    border:none;
+    border-radius:8px;
     background:#007bff;
     color:#fff;
-    border:none;
+    font-size:1rem;
+    font-weight:600;
     cursor:pointer;
-    border-radius:5px;
 }
 
+button:active{
+    transform:scale(0.98);
+}
+
+/* message */
+p{
+    text-align:center;
+    margin-top:12px;
+    font-size:0.95rem;
+    color:#333;
+}
+
+/* login link */
 a{
-    display:inline-block;
+    display:block;
+    text-align:center;
     margin-top:10px;
-    text-decoration:none;
-    padding:8px;
+    padding:12px;
     background:#28a745;
     color:#fff;
-    border-radius:5px;
+    border-radius:8px;
+    text-decoration:none;
+    font-size:0.95rem;
 }
+
+/* TABLET */
+@media(min-width:600px){
+    .card{
+        padding:25px;
+    }
+
+    h2{
+        font-size:1.6rem;
+    }
+}
+
+/* DESKTOP */
+@media(min-width:992px){
+    .card{
+        max-width:420px;
+    }
+}
+
 </style>
 
 </head>
@@ -91,7 +148,7 @@ a{
     <button type="submit">Create Admin</button>
 </form>
 
-<p><?php echo $msg; ?></p>
+<p><?= htmlspecialchars($msg) ?></p>
 
 <a href="login.php">Go to Login</a>
 

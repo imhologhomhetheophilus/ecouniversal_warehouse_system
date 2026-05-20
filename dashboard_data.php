@@ -1,93 +1,105 @@
 <?php
 session_start();
 
+header('Content-Type: application/json');
+
 if (!isset($_SESSION['admin'])) {
-    echo json_encode(['error' => 'Not logged in']);
+    echo json_encode([
+        'error' => 'Not logged in'
+    ]);
     exit;
 }
 
 include 'config/db.php';
 
-header('Content-Type: application/json');
+try {
 
-/* -------------------------
-   Fetch items
---------------------------*/
-$stmt = $pdo->query("SELECT * FROM items ORDER BY name ASC");
-$items = $stmt->fetchAll();
+    /* -------------------------
+       ITEMS
+    --------------------------*/
+    $stmt = $pdo->query("SELECT * FROM items ORDER BY name ASC");
+    $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-/* -------------------------
-   Low stock
---------------------------*/
-$lowStock = [];
+    /* -------------------------
+       LOW STOCK
+    --------------------------*/
+    $lowStock = array_values(array_filter($items, function($item) {
+        return (int)$item['qty'] < 10;
+    }));
 
-foreach ($items as $item) {
-    if ((int)$item['qty'] < 10) {
-        $lowStock[] = $item;
-    }
-}
+    /* -------------------------
+       LOCATION SUMMARY (FAST SQL RESULT)
+    --------------------------*/
+    $stmt = $pdo->query("
+        SELECT location, SUM(qty) AS totalQty
+        FROM items
+        GROUP BY location
+    ");
 
-/* -------------------------
-   Location summary (chart)
---------------------------*/
-$stmt = $pdo->query("
-    SELECT location, SUM(qty) AS totalQty
-    FROM items
-    GROUP BY location
-");
+    $chart = [
+        'labels' => [],
+        'data' => []
+    ];
 
-$chart = [
-    'labels' => [],
-    'data' => []
-];
-
-while ($row = $stmt->fetch()) {
-    $chart['labels'][] = $row['location'];
-    $chart['data'][] = (int)$row['totalQty'];
-}
-
-/* -------------------------
-   Recent transfers
---------------------------*/
-$stmt = $pdo->query("
-    SELECT * FROM transfers
-    ORDER BY date DESC
-    LIMIT 1000
-");
-
-$transfers = $stmt->fetchAll();
-
-/* -------------------------
-   Summary calculations
---------------------------*/
-$totalQty = 0;
-$totalWarehouses = 0;
-$totalShops = 0;
-
-foreach ($items as $item) {
-    $totalQty += (int)$item['qty'];
-
-    if (stripos($item['location'], 'warehouse') !== false) {
-        $totalWarehouses++;
+    foreach ($stmt as $row) {
+        $chart['labels'][] = $row['location'];
+        $chart['data'][] = (int)$row['totalQty'];
     }
 
-    if (stripos($item['location'], 'shop') !== false) {
-        $totalShops++;
-    }
-}
+    /* -------------------------
+       TRANSFERS
+    --------------------------*/
+    $stmt = $pdo->query("
+        SELECT * FROM transfers
+        ORDER BY date DESC
+        LIMIT 1000
+    ");
 
-/* -------------------------
-   Return JSON response
---------------------------*/
-echo json_encode([
-    'items' => $items,
-    'lowStock' => $lowStock,
-    'chart' => $chart,
-    'transfers' => $transfers,
-    'totalQty' => $totalQty,
-    'totalWarehouses' => $totalWarehouses,
-    'totalShops' => $totalShops
-]);
+    $transfers = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    /* -------------------------
+       SUMMARY (OPTIMIZED LOOP)
+    --------------------------*/
+    $totalQty = 0;
+    $totalWarehouses = 0;
+    $totalShops = 0;
+
+    foreach ($items as $item) {
+
+        $qty = (int)$item['qty'];
+        $totalQty += $qty;
+
+        $location = strtolower($item['location']);
+
+        if (strpos($location, 'warehouse') !== false) {
+            $totalWarehouses++;
+        }
+
+        if (strpos($location, 'shop') !== false) {
+            $totalShops++;
+        }
+    }
+
+    /* -------------------------
+       RESPONSE
+    --------------------------*/
+    echo json_encode([
+        'status' => 'success',
+        'items' => $items,
+        'lowStock' => $lowStock,
+        'chart' => $chart,
+        'transfers' => $transfers,
+        'totalQty' => $totalQty,
+        'totalWarehouses' => $totalWarehouses,
+        'totalShops' => $totalShops
+    ]);
+
+} catch (Exception $e) {
+
+    echo json_encode([
+        'status' => 'error',
+        'message' => $e->getMessage()
+    ]);
+}
 
 exit;
-?>

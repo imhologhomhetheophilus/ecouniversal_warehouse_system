@@ -8,9 +8,6 @@ if (!isset($_SESSION['admin'])) {
     exit;
 }
 
-/* -------------------------
-   Validate ID
---------------------------*/
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
 if ($id <= 0) {
@@ -18,9 +15,6 @@ if ($id <= 0) {
     exit;
 }
 
-/* -------------------------
-   Fetch item (PDO)
---------------------------*/
 $stmt = $pdo->prepare("SELECT * FROM items WHERE id = ?");
 $stmt->execute([$id]);
 $item = $stmt->fetch();
@@ -29,17 +23,6 @@ if (!$item) {
     die("Item not found");
 }
 
-$msg = "";
-
-/* -------------------------
-   Fetch item names
---------------------------*/
-$stmt = $pdo->query("SELECT DISTINCT name FROM items ORDER BY name");
-$itemNames = $stmt->fetchAll(PDO::FETCH_COLUMN);
-
-/* -------------------------
-   Handle update
---------------------------*/
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     $name = $_POST['name'];
@@ -49,29 +32,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     $image = $item['image'];
 
-    /* ---------------------
-       Upload new image
-    ----------------------*/
-    if (isset($_FILES['image']) && $_FILES['image']['name'] != '') {
+    if (!empty($_FILES['image']['name'])) {
 
-        $target_dir = "uploads/";
+        $dir = "uploads/";
+        if (!is_dir($dir)) mkdir($dir, 0777, true);
 
-        if (!is_dir($target_dir)) {
-            mkdir($target_dir, 0777, true);
-        }
-
-        $image = $target_dir . time() . "_" . basename($_FILES['image']['name']);
-
+        $image = $dir . time() . "_" . basename($_FILES['image']['name']);
         move_uploaded_file($_FILES['image']['tmp_name'], $image);
     }
 
-    /* ---------------------
-       Update query (PDO)
-    ----------------------*/
     $stmt = $pdo->prepare("
         UPDATE items
-        SET name = ?, location = ?, type = ?, qty = ?, image = ?
-        WHERE id = ?
+        SET name=?, location=?, type=?, qty=?, image=?
+        WHERE id=?
     ");
 
     $stmt->execute([$name, $location, $type, $qty, $image, $id]);
@@ -83,9 +56,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     exit;
 }
 
-/* -------------------------
-   Locations
---------------------------*/
 $locs = [
     'Ware Shop2','Warehouse MD','Warehouse Handle','Warehouse MD Opposite',
     'Warehouse Down','Warehouse Upstair','Warehouse Kugbo','Warehouse Karu',
@@ -100,64 +70,107 @@ $locs = [
 <title>Edit Item</title>
 
 <style>
+
+/* =========================
+   MOBILE FIRST
+========================= */
+
 body{
+    margin:0;
     font-family:Arial;
     background:#f4f6f9;
-    margin:0;
-    padding:20px;
+    padding:15px;
 }
 
+/* container */
 .container{
-    max-width:600px;
-    margin:0 auto;
+    max-width:520px;
+    margin:auto;
 }
 
+/* title */
 h2{
     text-align:center;
-    margin-bottom:20px;
+    font-size:1.4rem;
+    margin-bottom:15px;
 }
 
+/* form card */
 form{
     background:#fff;
-    padding:25px;
-    border-radius:10px;
-    box-shadow:0 4px 15px rgba(0,0,0,0.1);
+    padding:18px;
+    border-radius:12px;
+    box-shadow:0 2px 12px rgba(0,0,0,0.08);
 }
 
+/* labels */
+label{
+    display:block;
+    margin-top:12px;
+    font-size:0.9rem;
+    font-weight:600;
+}
+
+/* inputs */
 input,select,button{
-    padding:12px;
-    margin:10px 0;
     width:100%;
-    border-radius:6px;
-    border:1px solid #ccc;
-    font-size:1em;
+    padding:14px;
+    margin-top:6px;
+    border-radius:8px;
+    border:1px solid #ddd;
+    font-size:1rem;
+    box-sizing:border-box;
 }
 
+/* button */
 button{
+    margin-top:18px;
     background:#007bff;
     color:#fff;
     border:none;
-    cursor:pointer;
-    font-weight:bold;
+    font-weight:600;
 }
 
-button:hover{
-    background:#0056b3;
+button:active{
+    transform:scale(0.98);
 }
 
-a{
-    text-align:center;
-    display:block;
-    margin-top:15px;
-    text-decoration:none;
-    color:#007bff;
-}
-
+/* image preview */
 img.current-img{
-    max-width:120px;
-    border-radius:6px;
-    margin:10px 0;
+    width:100%;
+    max-width:160px;
+    display:block;
+    margin-top:10px;
+    border-radius:10px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.1);
 }
+
+/* back link */
+a{
+    display:block;
+    text-align:center;
+    margin-top:15px;
+    color:#007bff;
+    text-decoration:none;
+    font-size:0.95rem;
+}
+
+/* =========================
+   TABLET
+========================= */
+@media(min-width:600px){
+    body{padding:25px;}
+    h2{font-size:1.7rem;}
+    form{padding:25px;}
+}
+
+/* =========================
+   DESKTOP
+========================= */
+@media(min-width:992px){
+    .container{max-width:600px;}
+}
+
 </style>
 
 </head>
@@ -196,8 +209,8 @@ img.current-img{
 <input type="number" name="qty" value="<?= $item['qty'] ?>" min="1" required>
 
 <?php if ($item['image']): ?>
-    <label>Current Image</label>
-    <img src="<?= htmlspecialchars($item['image']) ?>" class="current-img">
+<label>Current Image</label>
+<img src="<?= htmlspecialchars($item['image']) ?>" class="current-img">
 <?php endif; ?>
 
 <label>Change Image</label>

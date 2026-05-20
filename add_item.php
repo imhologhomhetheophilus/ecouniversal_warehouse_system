@@ -9,26 +9,17 @@ if (!isset($_SESSION['admin'])) {
 
 $msg = "";
 
-/* -----------------------------
-   Fetch existing item names
-------------------------------*/
-$itemNames = [];
-
+/* Items */
 $stmt = $pdo->query("SELECT DISTINCT name FROM items ORDER BY name");
 $itemNames = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
-/* -----------------------------
-   Locations
-------------------------------*/
+/* Locations */
 $locations = [
     'Ware Shop2','Warehouse MD','Warehouse Handle','Warehouse MD Opposite',
     'Warehouse Down','Warehouse Upstair','Warehouse Kugbo','Warehouse Karu',
     'Shop 1','Pannel Shop','Shop 2','Deidei Warehouse','Deidei Shop'
 ];
 
-/* -----------------------------
-   Handle POST
-------------------------------*/
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     $name = $_POST['name'];
@@ -38,25 +29,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     $image = '';
 
-    /* -------------------------
-       Upload Image
-    --------------------------*/
-    if (isset($_FILES['image']) && $_FILES['image']['name'] != '') {
+    if (!empty($_FILES['image']['name'])) {
+        $dir = "uploads/";
+        if (!is_dir($dir)) mkdir($dir, 0777, true);
 
-        $target_dir = "uploads/";
-
-        if (!is_dir($target_dir)) {
-            mkdir($target_dir, 0777, true);
-        }
-
-        $image = $target_dir . time() . "_" . basename($_FILES['image']['name']);
-
+        $image = $dir . time() . "_" . basename($_FILES['image']['name']);
         move_uploaded_file($_FILES['image']['tmp_name'], $image);
     }
 
-    /* -------------------------
-       Insert using PDO
-    --------------------------*/
     $stmt = $pdo->prepare("
         INSERT INTO items (name, location, type, qty, image)
         VALUES (?, ?, ?, ?, ?)
@@ -76,80 +56,136 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Imhotech Inventory System</title>
+<title>Imhotech Inventory</title>
 
 <style>
+/* =========================
+   MOBILE FIRST DESIGN
+========================= */
+
 body{
     margin:0;
-    padding:20px;
     font-family:Arial;
     background:#f4f6f9;
+    padding:15px;
 }
 
+/* Container */
 .container{
-    max-width:600px;
-    margin:0 auto;
+    width:100%;
+    max-width:520px;
+    margin:auto;
 }
 
+/* Title */
 h2{
     text-align:center;
-    margin-bottom:20px;
+    font-size:1.4rem;
+    margin-bottom:15px;
 }
 
+/* Card form */
 form{
     background:#fff;
-    padding:25px;
-    border-radius:10px;
-    box-shadow:0 4px 15px rgba(0,0,0,0.1);
+    padding:18px;
+    border-radius:12px;
+    box-shadow:0 2px 12px rgba(0,0,0,0.08);
 }
 
-select,input,button{
-    padding:12px;
-    margin:10px 0;
+/* Inputs */
+label{
+    display:block;
+    margin-top:12px;
+    font-size:0.9rem;
+    font-weight:600;
+}
+
+input,select,button{
     width:100%;
-    border-radius:6px;
-    border:1px solid #ccc;
+    padding:14px;
+    margin-top:6px;
+    border-radius:8px;
+    border:1px solid #ddd;
+    font-size:1rem;
     box-sizing:border-box;
-    font-size:1em;
 }
 
+/* Button */
 button{
+    margin-top:18px;
     background:#007bff;
     color:#fff;
     border:none;
-    cursor:pointer;
-    font-weight:bold;
+    font-weight:600;
 }
 
-button:hover{
-    background:#0056b3;
+button:active{
+    transform:scale(0.98);
 }
 
+/* Back link */
 a{
-    text-align:center;
     display:block;
+    text-align:center;
     margin-top:15px;
-    text-decoration:none;
     color:#007bff;
+    text-decoration:none;
 }
 
-/* Autocomplete */
+/* AUTOCOMPLETE */
 .autocomplete-items{
     position:absolute;
-    border:1px solid #d4d4d4;
-    z-index:99;
     background:#fff;
-    max-height:200px;
+    border:1px solid #ddd;
+    max-height:180px;
     overflow-y:auto;
+    z-index:1000;
+    width:100%;
+    border-radius:0 0 8px 8px;
 }
 
 .autocomplete-items div{
-    padding:10px;
+    padding:12px;
     cursor:pointer;
+    font-size:0.95rem;
 }
 
 .autocomplete-items div:hover{
-    background:#e9e9e9;
+    background:#f1f1f1;
+}
+
+/* =========================
+   TABLET
+========================= */
+@media (min-width: 600px){
+    body{
+        padding:25px;
+    }
+
+    h2{
+        font-size:1.7rem;
+    }
+
+    form{
+        padding:25px;
+    }
+}
+
+/* =========================
+   DESKTOP
+========================= */
+@media (min-width: 992px){
+    .container{
+        max-width:600px;
+    }
+
+    form{
+        padding:30px;
+    }
+
+    input,select,button{
+        padding:12px;
+    }
 }
 </style>
 
@@ -178,10 +214,10 @@ a{
 
 <label>Type</label>
 <select name="type" required>
-    <option value="Packet">Packet</option>
-    <option value="Pieces">Pieces</option>
-    <option value="Carton">Carton</option>
-    <option value="Roll">Roll</option>
+    <option>Packet</option>
+    <option>Pieces</option>
+    <option>Carton</option>
+    <option>Roll</option>
 </select>
 
 <label>Quantity</label>
@@ -201,42 +237,36 @@ a{
 <script>
 const items = <?= json_encode($itemNames) ?>;
 
-function autocomplete(inp, arr) {
-    let currentFocus;
+function autocomplete(inp, arr){
+    inp.addEventListener("input", function(){
+        closeAll();
 
-    inp.addEventListener("input", function () {
-        let val = this.value;
+        if(!this.value) return;
 
-        closeAllLists();
+        const box = document.createElement("div");
+        box.className = "autocomplete-items";
+        this.parentNode.appendChild(box);
 
-        if (!val) return false;
+        arr.forEach(item=>{
+            if(item.toLowerCase().startsWith(this.value.toLowerCase())){
+                const div = document.createElement("div");
+                div.textContent = item;
 
-        let list = document.createElement("DIV");
-        list.className = "autocomplete-items";
-        this.parentNode.appendChild(list);
+                div.onclick = ()=>{
+                    inp.value = item;
+                    closeAll();
+                };
 
-        arr.forEach(function (item) {
-            if (item.toLowerCase().startsWith(val.toLowerCase())) {
-
-                let div = document.createElement("DIV");
-                div.innerHTML = "<strong>" + item.substr(0, val.length) + "</strong>" + item.substr(val.length);
-                div.innerHTML += "<input type='hidden' value='" + item + "'>";
-
-                div.addEventListener("click", function () {
-                    inp.value = this.getElementsByTagName("input")[0].value;
-                    closeAllLists();
-                });
-
-                list.appendChild(div);
+                box.appendChild(div);
             }
         });
     });
 
-    function closeAllLists() {
-        document.querySelectorAll(".autocomplete-items").forEach(el => el.remove());
+    function closeAll(){
+        document.querySelectorAll(".autocomplete-items").forEach(e=>e.remove());
     }
 
-    document.addEventListener("click", closeAllLists);
+    document.addEventListener("click", closeAll);
 }
 
 autocomplete(document.getElementById("itemName"), items);

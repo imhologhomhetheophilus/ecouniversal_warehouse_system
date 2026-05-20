@@ -10,24 +10,15 @@ include 'config/db.php';
 
 $msg = "";
 
-/* -------------------------
-   Fetch items
---------------------------*/
 $stmt = $pdo->query("SELECT * FROM items ORDER BY name");
 $items = $stmt->fetchAll();
 
-/* -------------------------
-   Locations
---------------------------*/
 $locations = [
     'Ware Shop2','Warehouse MD','Warehouse Handle','Warehouse MD Opposite',
     'Warehouse Down','Warehouse Upstair','Warehouse Kugbo','Warehouse Karu',
     'Shop 1','Pannel Shop','Shop 2','Deidei Warehouse','Deidei Shop'
 ];
 
-/* -------------------------
-   Handle transfer
---------------------------*/
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     $item_id = (int) $_POST['item_id'];
@@ -35,39 +26,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $to_loc = $_POST['to_loc'];
     $qty = (int) $_POST['qty'];
 
-    /* -------------------------
-       Get item
-    --------------------------*/
     $stmt = $pdo->prepare("SELECT * FROM items WHERE id = ?");
     $stmt->execute([$item_id]);
     $item = $stmt->fetch();
 
     if ($item && $item['qty'] >= $qty) {
 
-        /* -------------------------
-           Subtract from source
-        --------------------------*/
-        $new_qty_from = $item['qty'] - $qty;
+        $stmt = $pdo->prepare("UPDATE items SET qty = qty - ? WHERE id = ?");
+        $stmt->execute([$qty, $item_id]);
 
-        $stmt = $pdo->prepare("UPDATE items SET qty = ? WHERE id = ?");
-        $stmt->execute([$new_qty_from, $item_id]);
-
-        /* -------------------------
-           Add to destination
-        --------------------------*/
-        $stmt = $pdo->prepare("
-            SELECT * FROM items
-            WHERE name = ? AND location = ?
-        ");
+        $stmt = $pdo->prepare("SELECT * FROM items WHERE name = ? AND location = ?");
         $stmt->execute([$item['name'], $to_loc]);
         $dest_item = $stmt->fetch();
 
         if ($dest_item) {
 
-            $new_qty_to = $dest_item['qty'] + $qty;
-
-            $stmt = $pdo->prepare("UPDATE items SET qty = ? WHERE id = ?");
-            $stmt->execute([$new_qty_to, $dest_item['id']]);
+            $stmt = $pdo->prepare("UPDATE items SET qty = qty + ? WHERE id = ?");
+            $stmt->execute([$qty, $dest_item['id']]);
 
         } else {
 
@@ -85,9 +60,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             ]);
         }
 
-        /* -------------------------
-           Record transfer
-        --------------------------*/
         $stmt = $pdo->prepare("
             INSERT INTO transfers (item, from_loc, to_loc, qty, date)
             VALUES (?, ?, ?, ?, NOW())
@@ -119,64 +91,119 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <title>Transfer Item</title>
 
 <style>
-body{
-    font-family:Arial;
-    background:#f4f6f9;
-    margin:0;
-    padding:20px;
-}
 
-.container{
-    max-width:500px;
-    margin:0 auto;
-}
+/* =========================
+   MOBILE FIRST DESIGN
+========================= */
 
-h2{
-    text-align:center;
-    margin-bottom:20px;
-}
-
-form{
-    background:#fff;
-    padding:25px;
-    border-radius:10px;
-    box-shadow:0 4px 15px rgba(0,0,0,0.1);
-}
-
-select,input,button{
-    padding:12px;
-    margin:10px 0;
-    width:100%;
-    border-radius:6px;
-    border:1px solid #ccc;
+*{
     box-sizing:border-box;
 }
 
+body{
+    margin:0;
+    font-family:Arial;
+    background:#f4f6f9;
+    padding:16px;
+}
+
+.container{
+    width:100%;
+    max-width:520px;
+    margin:auto;
+}
+
+/* Title */
+h2{
+    text-align:center;
+    margin:10px 0 18px;
+    font-size:1.4rem;
+}
+
+/* Card form */
+form{
+    background:#fff;
+    padding:18px;
+    border-radius:12px;
+    box-shadow:0 4px 15px rgba(0,0,0,0.08);
+}
+
+/* Labels */
+label{
+    display:block;
+    margin-top:12px;
+    font-size:0.95rem;
+    font-weight:600;
+    color:#333;
+}
+
+/* Inputs */
+select, input{
+    width:100%;
+    padding:12px;
+    margin-top:6px;
+    border-radius:8px;
+    border:1px solid #ddd;
+    font-size:1rem;
+    outline:none;
+}
+
+select:focus, input:focus{
+    border-color:#007bff;
+}
+
+/* Button */
 button{
+    width:100%;
+    padding:13px;
+    margin-top:16px;
+    border:none;
+    border-radius:8px;
     background:#007bff;
     color:#fff;
-    border:none;
+    font-size:1rem;
+    font-weight:600;
     cursor:pointer;
-    font-weight:bold;
 }
 
 button:hover{
     background:#0056b3;
 }
 
+/* Message */
 .msg{
-    color:red;
+    background:#ffe5e5;
+    color:#b00020;
+    padding:10px;
+    border-radius:8px;
     text-align:center;
-    margin-bottom:10px;
+    margin-bottom:12px;
 }
 
+/* Back link */
 a{
-    text-align:center;
     display:block;
-    margin-top:15px;
-    text-decoration:none;
+    text-align:center;
+    margin-top:14px;
     color:#007bff;
+    text-decoration:none;
+    font-size:0.95rem;
 }
+
+/* =========================
+   DESKTOP IMPROVEMENT
+========================= */
+
+@media(min-width:768px){
+    h2{
+        font-size:1.7rem;
+    }
+
+    form{
+        padding:25px;
+    }
+}
+
 </style>
 
 </head>

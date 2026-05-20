@@ -233,7 +233,7 @@ th, td{
 <div class="overlay"></div>
 
 <div class="sidebar">
-    <h2>Imhotech</h2>
+    <h2>Ecouniversal</h2>
     <a href="dashboard.php">Dashboard</a>
     <a href="add_item.php">Add Item</a>
     <a href="transfer.php">Transfer</a>

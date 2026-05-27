@@ -1,23 +1,15 @@
 <?php
 session_start();
-
-if (!isset($_SESSION['admin'])) {
-    header("Location: login.php");
-    exit;
-}
-
 include 'config/db.php';
 
-if (!isset($_GET['id'])) {
-    header("Location: dashboard.php");
+if (!isset($_SESSION['admin'])) {
+    echo json_encode(["status"=>"error","msg"=>"Unauthorized"]);
     exit;
 }
 
-$id = (int) $_GET['id']; // force integer for safety
+$id = (int) $_POST['id'];
 
 $stmt = $pdo->prepare("DELETE FROM items WHERE id = ?");
 $stmt->execute([$id]);
 
-header("Location: dashboard.php");
-exit;
-?>
+echo json_encode(["status"=>"success"]);

@@ -1,5 +1,6 @@
 <?php
 session_start();
+include 'config/db.php';
 
 if (!isset($_SESSION['admin'])) {
     header("Location: login.php");
@@ -11,12 +12,14 @@ if (!isset($_SESSION['admin'])) {
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dashboard</title>
+<title>Inventory Dashboard</title>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
+
+/* GLOBAL */
 body{
     margin:0;
     font-family:Arial;
@@ -30,18 +33,17 @@ body{
     left:-260px;
     width:220px;
     height:100vh;
-    background:#222;
+    background:#1e1e1e;
     color:#fff;
     padding:20px;
     transition:0.3s;
-    z-index:1500;
 }
 .sidebar.open{ left:0; }
 
 .sidebar a{
     display:block;
-    color:#ccc;
     padding:10px;
+    color:#ccc;
     text-decoration:none;
 }
 .sidebar a:hover{ background:#007bff; color:#fff; }
@@ -51,11 +53,11 @@ body{
     position:fixed;
     top:10px;
     left:10px;
-    z-index:2000;
     background:#222;
     color:#fff;
     padding:10px;
     border-radius:6px;
+    z-index:2000;
 }
 
 /* OVERLAY */
@@ -65,7 +67,6 @@ body{
     width:100%;
     height:100%;
     background:rgba(0,0,0,0.4);
-    z-index:1400;
 }
 .overlay.show{ display:block; }
 
@@ -78,31 +79,44 @@ body{
 .card{
     background:#fff;
     padding:12px;
-    margin-top:12px;
     border-radius:10px;
+    margin-top:12px;
     box-shadow:0 2px 10px rgba(0,0,0,0.05);
+}
+
+/* SUMMARY */
+.summary{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:10px;
+}
+.summary div{
+    background:#fff;
+    padding:12px;
+    border-radius:10px;
+    text-align:center;
 }
 
 /* SEARCH */
 .search-container{
     position:relative;
 }
+
 #search{
     width:100%;
     padding:10px;
     border-radius:6px;
     border:1px solid #ccc;
 }
+
 #search-dropdown{
     position:absolute;
-    top:100%;
-    left:0;
-    right:0;
+    width:100%;
     background:#fff;
     border:1px solid #ddd;
+    display:none;
     max-height:250px;
     overflow:auto;
-    display:none;
     z-index:999;
 }
 
@@ -110,11 +124,13 @@ body{
 .table-wrapper{
     overflow-x:auto;
 }
+
 table{
     width:100%;
     border-collapse:collapse;
-    min-width:600px;
+    min-width:650px;
 }
+
 th,td{
     border:1px solid #ddd;
     padding:8px;
@@ -129,28 +145,37 @@ th,td{
     border-radius:6px;
 }
 
-/* BUTTON */
+/* BUTTONS */
 .btn{
     padding:5px 8px;
+    font-size:11px;
     border-radius:5px;
     color:#fff;
-    font-size:11px;
-    text-decoration:none;
+    cursor:pointer;
 }
-.btn-edit{ background:#007bff; }
-.btn-delete{ background:#dc3545; }
+.btn-edit{ background:#007bff; border:none; }
+.btn-delete{ background:#dc3545; border:none; }
 
-/* CHART */
+/* LOW STOCK */
+.low{
+    color:red;
+    font-weight:bold;
+}
+
+/* CANVAS */
 canvas{
     width:100% !important;
     height:260px !important;
 }
 
-/* DESKTOP */
 @media(min-width:768px){
     .sidebar{ left:0; }
     .main{ margin-left:240px; padding:25px; }
     .menu-btn{ display:none; }
+
+    .summary{
+        grid-template-columns:repeat(3,1fr);
+    }
 }
 </style>
 </head>
@@ -161,7 +186,7 @@ canvas{
 <div class="overlay"></div>
 
 <div class="sidebar">
-    <h3>Inventory</h3>
+    <h3>Inventory System</h3>
     <a href="dashboard.php">Dashboard</a>
     <a href="add_item.php">Add Item</a>
     <a href="transfer.php">Transfer</a>
@@ -179,59 +204,97 @@ canvas{
 </div>
 
 <!-- SUMMARY -->
-<div class="card" id="summary"></div>
+<div class="summary" id="summary"></div>
 
-<!-- BAR -->
+<!-- LOW STOCK -->
+<div class="card" id="lowStock"></div>
+
+<!-- BAR CHART -->
 <div class="card">
     <h3>Stock by Location</h3>
     <canvas id="barChart"></canvas>
 </div>
 
-<!-- PIE -->
+<!-- PIE CHART -->
 <div class="card">
     <h3>Type Distribution</h3>
     <canvas id="pieChart"></canvas>
 </div>
 
-<!-- TABLE -->
+<!-- INVENTORY -->
 <div class="card table-wrapper" id="inventory"></div>
 
 </div>
 
+<!-- EDIT MODAL -->
+<div id="editModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;">
+<div style="background:#fff;width:90%;max-width:400px;margin:100px auto;padding:20px;border-radius:10px;">
+
+<h3>Edit Item</h3>
+
+<input type="hidden" id="edit_id">
+
+<input id="edit_name" placeholder="Name" style="width:100%;padding:10px;margin:5px 0;">
+<input id="edit_location" placeholder="Location" style="width:100%;padding:10px;margin:5px 0;">
+<input id="edit_type" placeholder="Type" style="width:100%;padding:10px;margin:5px 0;">
+<input id="edit_qty" type="number" placeholder="Qty" style="width:100%;padding:10px;margin:5px 0;">
+
+<button onclick="saveEdit()" style="width:100%;padding:10px;background:#007bff;color:#fff;border:none;">Save</button>
+<button onclick="$('#editModal').hide()" style="width:100%;margin-top:10px;">Close</button>
+
+</div>
+</div>
+
 <script>
 
-let dashboardData = { items: [] };
-let barChartInstance = null;
-let pieChartInstance = null;
+let dataStore = { items: [] };
+let barChart, pieChart;
 
-/* LOAD DATA */
-function loadDashboardData(){
+/* LOAD DASHBOARD */
+function loadDashboard(){
 
-$.get('dashboard_data.php', function(data){
+$.get("dashboard_data.php", function(data){
 
-    dashboardData = data || { items: [] };
+    dataStore = data;
 
     /* SUMMARY */
     $('#summary').html(`
-        <b>Total Qty:</b> ${data.totalQty || 0}
+        <div><h3>${data.totalQty}</h3><p>Total Qty</p></div>
+        <div><h3>${data.totalWarehouses}</h3><p>Warehouses</p></div>
+        <div><h3>${data.totalShops}</h3><p>Shops</p></div>
     `);
 
-    /* INVENTORY TABLE */
+    /* LOW STOCK */
+    $('#lowStock').html(
+        (data.lowStock||[]).length
+        ? "<h4>Low Stock</h4>" + data.lowStock.map(i =>
+            `<div class="low">${i.name} - ${i.qty} (${i.location})</div>`
+          ).join('')
+        : "No Low Stock"
+    );
+
+    /* INVENTORY */
     $('#inventory').html(`
         <h3>Inventory</h3>
         <table>
-            <tr>
-                <th>Img</th><th>Name</th><th>Loc</th><th>Type</th><th>Qty</th>
-            </tr>
-            ${(data.items || []).map(i=>`
-                <tr>
-                    <td>${i.image ? `<img class="item-img" src="${i.image}">` : ''}</td>
-                    <td>${i.name}</td>
-                    <td>${i.location}</td>
-                    <td>${i.type}</td>
-                    <td>${i.qty}</td>
-                </tr>
-            `).join('')}
+        <tr>
+            <th>Img</th><th>Name</th><th>Loc</th><th>Type</th><th>Qty</th><th>Action</th>
+        </tr>
+
+        ${(data.items||[]).map(i=>`
+        <tr id="row-${i.id}">
+            <td>${i.image ? `<img src="${i.image}" class="item-img">` : ''}</td>
+            <td class="name">${i.name}</td>
+            <td class="location">${i.location}</td>
+            <td class="type">${i.type}</td>
+            <td class="qty">${i.qty}</td>
+            <td>
+                <button class="btn btn-edit" onclick="openEdit(${i.id})">Edit</button>
+                <button class="btn btn-delete" onclick="deleteItem(${i.id})">Del</button>
+            </td>
+        </tr>
+        `).join('')}
+
         </table>
     `);
 
@@ -244,119 +307,122 @@ $.get('dashboard_data.php', function(data){
 /* CHARTS */
 function renderCharts(data){
 
-    const labels = (data.chart?.labels) || [];
-    const values = (data.chart?.data) || [];
+let labels = data.chart?.labels || [];
+let values = data.chart?.data || [];
 
-    /* TYPE DISTRIBUTION FIX (AUTO BUILD) */
-    let typeMap = {};
+let typeMap = {};
+(data.items||[]).forEach(i=>{
+    typeMap[i.type] = (typeMap[i.type]||0) + parseInt(i.qty||0);
+});
 
-    (data.items || []).forEach(i => {
-        let type = (i.type || "Unknown").trim();
-        let qty = parseInt(i.qty || 0);
+if(barChart) barChart.destroy();
+if(pieChart) pieChart.destroy();
 
-        typeMap[type] = (typeMap[type] || 0) + qty;
-    });
-
-    const typeLabels = Object.keys(typeMap);
-    const typeValues = Object.values(typeMap);
-
-    if(typeLabels.length === 0){
-        typeLabels.push("No Data");
-        typeValues.push(1);
+/* BAR */
+barChart = new Chart(document.getElementById("barChart"), {
+    type:"bar",
+    data:{
+        labels,
+        datasets:[{
+            data:values,
+            backgroundColor:"#007bff"
+        }]
     }
+});
 
-    /* BAR */
-    if(barChartInstance) barChartInstance.destroy();
+/* PIE */
+pieChart = new Chart(document.getElementById("pieChart"), {
+    type:"pie",
+    data:{
+        labels:Object.keys(typeMap),
+        datasets:[{
+            data:Object.values(typeMap),
+            backgroundColor:["#007bff","#28a745","#ffc107","#dc3545","#6f42c1"]
+        }]
+    }
+});
 
-    barChartInstance = new Chart(document.getElementById('barChart'), {
-        type: 'bar',
-        data: {
-            labels: labels.length ? labels : ["No Data"],
-            datasets: [{
-                label: 'Stock',
-                data: values.length ? values : [0],
-                backgroundColor: '#007bff'
-            }]
-        },
-        options: {
-            responsive:true,
-            maintainAspectRatio:false
-        }
-    });
-
-    /* PIE */
-    if(pieChartInstance) pieChartInstance.destroy();
-
-    pieChartInstance = new Chart(document.getElementById('pieChart'), {
-        type: 'pie',
-        data: {
-            labels: typeLabels,
-            datasets: [{
-                data: typeValues,
-                backgroundColor: [
-                    '#007bff','#28a745','#ffc107',
-                    '#dc3545','#6f42c1','#20c997'
-                ]
-            }]
-        },
-        options: {
-            responsive:true,
-            maintainAspectRatio:false
-        }
-    });
 }
 
-/* SEARCH (WITH IMAGE + TYPE + QTY) */
-$('#search').on('input', function(){
+/* SEARCH WITH IMAGE */
+$("#search").on("input", function(){
 
-    const term = this.value.toLowerCase();
-    const box = $('#search-dropdown');
+let val = this.value.toLowerCase();
+let box = $("#search-dropdown");
 
-    if(!term){
-        box.hide();
-        return;
-    }
+if(!val){ box.hide(); return; }
 
-    const res = (dashboardData.items || []).filter(i =>
-        i.name.toLowerCase().includes(term) ||
-        i.location.toLowerCase().includes(term) ||
-        i.type.toLowerCase().includes(term)
-    );
+let res = (dataStore.items||[]).filter(i =>
+    i.name.toLowerCase().includes(val) ||
+    i.location.toLowerCase().includes(val) ||
+    i.type.toLowerCase().includes(val)
+);
 
-    box.html(res.map(i=>`
-        <div style="display:flex;gap:10px;padding:10px;border-bottom:1px solid #eee;align-items:center;">
+box.html(res.map(i=>`
+<div style="display:flex;gap:10px;padding:8px;border-bottom:1px solid #eee;">
+    ${i.image ? `<img src="${i.image}" class="item-img">` : ''}
+    <div>
+        <b>${i.name}</b><br>
+        <small>${i.type} | ${i.location} | Qty: ${i.qty}</small>
+    </div>
+</div>
+`).join(''));
 
-            ${i.image ? `
-                <img src="${i.image}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;">
-            ` : `
-                <div style="width:40px;height:40px;background:#ddd;border-radius:6px;"></div>
-            `}
+box.show();
 
-            <div>
-                <b>${i.name}</b><br>
-                <small>${i.location} | ${i.type} | Qty: ${i.qty}</small>
-            </div>
-
-        </div>
-    `).join(''));
-
-    box.show();
 });
+
+/* DELETE */
+function deleteItem(id){
+
+if(!confirm("Delete item?")) return;
+
+$.post("delete_item.php",{id},function(res){
+    $("#row-"+id).fadeOut();
+});
+
+}
+
+/* EDIT */
+function openEdit(id){
+
+let row = $("#row-"+id);
+
+$("#edit_id").val(id);
+$("#edit_name").val(row.find(".name").text());
+$("#edit_location").val(row.find(".location").text());
+$("#edit_type").val(row.find(".type").text());
+$("#edit_qty").val(row.find(".qty").text());
+
+$("#editModal").show();
+
+}
+
+/* SAVE EDIT */
+function saveEdit(){
+
+$.post("edit_item.php",{
+    id:$("#edit_id").val(),
+    name:$("#edit_name").val(),
+    location:$("#edit_location").val(),
+    type:$("#edit_type").val(),
+    qty:$("#edit_qty").val()
+},function(){
+
+loadDashboard();
+$("#editModal").hide();
+
+});
+
+}
 
 /* MENU */
-$('.menu-btn').on('click', function(){
-    $('.sidebar').toggleClass('open');
-    $('.overlay').toggleClass('show');
-});
-
-$('.overlay').on('click', function(){
-    $('.sidebar').removeClass('open');
-    $(this).removeClass('show');
-});
+$(".menu-btn").click(()=>$(".sidebar,.overlay").toggleClass("open show"));
+$(".overlay").click(()=>$(".sidebar,.overlay").removeClass("open show"));
 
 /* INIT */
-loadDashboardData();
-setInterval(loadDashboardData, 15000);
+loadDashboard();
+setInterval(loadDashboard,15000);
 
 </script>
 

@@ -12,7 +12,7 @@ if (!isset($_SESSION['admin'])) {
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Inventory Dashboard </title>
+<title>Inventory Dashboard</title>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -38,7 +38,7 @@ body{
     color:#fff;
     padding:20px;
     transition:0.3s;
-    z-index:1000;
+    z-index:1001;
 }
 
 .sidebar.open{
@@ -66,16 +66,16 @@ body{
     color:#fff;
     padding:10px;
     border-radius:6px;
-    z-index:2001;
+    z-index:2002;
 }
 
-/* ================= OVERLAY (FIXED CLICK ISSUE) ================= */
+/* ================= OVERLAY (FIXED FULL CLICK CONTROL) ================= */
 .overlay{
     position:fixed;
     inset:0;
     background:rgba(0,0,0,0.4);
     display:none;
-    z-index:999;
+    z-index:1000;
 }
 
 .overlay.show{
@@ -151,13 +151,18 @@ th,td{
     display:none;
     max-height:250px;
     overflow:auto;
-    z-index:2000;
+    z-index:2003;
 }
 
-/* ================= RESPONSIVE ================= */
+/* ================= RESPONSIVE FIX ================= */
 @media(min-width:768px){
+
     .sidebar{
         left:0;
+    }
+
+    .overlay{
+        display:none !important;
     }
 
     .main{
@@ -215,7 +220,6 @@ th,td{
 
 <div class="card table-wrapper" id="inventory"></div>
 
-<!-- ✅ TRANSFER HISTORY FIXED -->
 <div class="card table-wrapper">
     <h3>Transfer History</h3>
     <table id="transferTable">
@@ -236,7 +240,7 @@ th,td{
 let dataStore = {};
 let barChart, pieChart;
 
-/* LOAD DATA */
+/* LOAD */
 function loadDashboard(){
 
 $.get("dashboard_data.php", function(data){
@@ -263,9 +267,7 @@ $.get("dashboard_data.php", function(data){
     $('#inventory').html(`
         <h3>Inventory</h3>
         <table>
-        <tr>
-            <th>Img</th><th>Name</th><th>Loc</th><th>Type</th><th>Qty</th>
-        </tr>
+        <tr><th>Img</th><th>Name</th><th>Loc</th><th>Type</th><th>Qty</th></tr>
         ${(data.items||[]).map(i=>`
         <tr>
             <td>${i.image ? `<img src="${i.image}" class="item-img">` : ''}</td>
@@ -278,16 +280,12 @@ $.get("dashboard_data.php", function(data){
         </table>
     `);
 
-    /* TRANSFER HISTORY (SAFE LOAD) */
+    /* TRANSFER */
     let transfers = data.transfers || [];
 
     $('#transferTable').html(`
         <tr>
-            <th>Item</th>
-            <th>From</th>
-            <th>To</th>
-            <th>Qty</th>
-            <th>Date</th>
+            <th>Item</th><th>From</th><th>To</th><th>Qty</th><th>Date</th>
         </tr>
         ${transfers.map(t=>`
         <tr>
@@ -318,31 +316,19 @@ let typeMap = {};
     typeMap[i.type] = (typeMap[i.type]||0) + parseInt(i.qty||0);
 });
 
-/* BAR */
 if(barChart) barChart.destroy();
+if(pieChart) pieChart.destroy();
 
 barChart = new Chart(document.getElementById("barChart"), {
     type:"bar",
-    data:{
-        labels,
-        datasets:[{
-            data:values,
-            backgroundColor:"#007bff"
-        }]
-    }
+    data:{ labels, datasets:[{ data:values, backgroundColor:"#007bff" }] }
 });
-
-/* PIE */
-if(pieChart) pieChart.destroy();
 
 pieChart = new Chart(document.getElementById("pieChart"), {
     type:"pie",
     data:{
         labels:Object.keys(typeMap),
-        datasets:[{
-            data:Object.values(typeMap),
-            backgroundColor:["#007bff","#28a745","#ffc107","#dc3545"]
-        }]
+        datasets:[{ data:Object.values(typeMap), backgroundColor:["#007bff","#28a745","#ffc107","#dc3545"] }]
     }
 });
 
@@ -365,7 +351,7 @@ let res = (dataStore.items||[]).filter(i =>
 );
 
 $("#search-dropdown").html(res.map(i=>`
-<div style="display:flex;gap:10px;padding:8px;border-bottom:1px solid #eee;">
+<div style="display:flex;gap:10px;padding:8px;">
     ${i.image ? `<img src="${i.image}" class="item-img">` : ''}
     <div>
         <b>${i.name}</b><br>
@@ -376,7 +362,7 @@ $("#search-dropdown").html(res.map(i=>`
 
 });
 
-/* MENU FIX (YOUR ISSUE WAS HERE) */
+/* FIXED MENU TOGGLE */
 $(".menu-btn").click(function(){
     $(".sidebar").addClass("open");
     $(".overlay").addClass("show");
@@ -389,7 +375,7 @@ $(".overlay").click(function(){
 
 /* INIT */
 loadDashboard();
-setInterval(loadDashboard, 15000);
+setInterval(loadDashboard,15000);
 
 </script>
 

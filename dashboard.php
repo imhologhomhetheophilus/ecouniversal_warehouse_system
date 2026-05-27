@@ -60,7 +60,10 @@ body{
     text-decoration:none;
 }
 
-.sidebar a:hover{ background:#007bff; color:#fff; }
+.sidebar a:hover{
+    background:#007bff;
+    color:#fff;
+}
 
 /* OVERLAY */
 .overlay{
@@ -78,7 +81,7 @@ body{
     padding:12px;
 }
 
-/* CARDS GRID */
+/* GRID */
 .summary-cards{
     display:grid;
     grid-template-columns:1fr;
@@ -102,13 +105,12 @@ body{
     box-shadow:0 2px 10px rgba(0,0,0,0.05);
 }
 
-/* TABLE WRAPPER (IMPORTANT FIX) */
+/* TABLE */
 .table-wrapper{
     width:100%;
     overflow-x:auto;
 }
 
-/* TABLE */
 table{
     width:100%;
     border-collapse:collapse;
@@ -123,7 +125,9 @@ th,td{
 }
 
 /* SEARCH */
-.search-container{ position:relative; }
+.search-container{
+    position:relative;
+}
 
 #search{
     width:100%;
@@ -140,7 +144,7 @@ th,td{
     background:#fff;
     border:1px solid #ddd;
     display:none;
-    max-height:200px;
+    max-height:250px;
     overflow:auto;
     z-index:999;
 }
@@ -164,13 +168,13 @@ th,td{
 .btn-edit{ background:#007bff; }
 .btn-delete{ background:#dc3545; }
 
-/* CHART FIX (IMPORTANT) */
+/* CHART FIX */
 canvas{
     width:100% !important;
     height:260px !important;
 }
 
-/* ================= DESKTOP ================= */
+/* DESKTOP */
 @media(min-width:768px){
 
     .menu-btn{ display:none; }
@@ -200,7 +204,7 @@ canvas{
 <div class="overlay"></div>
 
 <div class="sidebar">
-    <h2>Ecouniversal</h2>
+    <h2>Eco-Universal Services Limited</h2>
     <a href="dashboard.php">Dashboard</a>
     <a href="add_item.php">Add Item</a>
     <a href="transfer.php">Transfer</a>
@@ -327,17 +331,30 @@ $.get('dashboard_data.php', function(data){
 
 }
 
-/* FIXED CHARTS */
+/* FIXED CHARTS (TYPE DISTRIBUTION NOW ALWAYS WORKS) */
 function renderCharts(data){
 
-    // SAFE FALLBACKS (IMPORTANT FIX)
-    const labels = data.chart?.labels || ["No Data"];
-    const values = data.chart?.data || [0];
+    const labels = data.chart?.labels || [];
+    const values = data.chart?.data || [];
 
-    const typeLabels = data.typeData?.labels || ["Empty"];
-    const typeValues = data.typeData?.data || [1];
+    /* ✅ AUTO-GENERATE TYPE DISTRIBUTION FROM ITEMS */
+    let typeMap = {};
 
-    // BAR
+    (data.items || []).forEach(i => {
+        let type = i.type || "Unknown";
+        let qty = parseInt(i.qty || 0);
+
+        if(!typeMap[type]){
+            typeMap[type] = 0;
+        }
+
+        typeMap[type] += qty;
+    });
+
+    const typeLabels = Object.keys(typeMap);
+    const typeValues = Object.values(typeMap);
+
+    // BAR CHART
     const ctx1 = document.getElementById('barChart');
 
     if(barChartInstance) barChartInstance.destroy();
@@ -345,10 +362,10 @@ function renderCharts(data){
     barChartInstance = new Chart(ctx1, {
         type: 'bar',
         data: {
-            labels: labels,
+            labels: labels.length ? labels : ["No Data"],
             datasets: [{
-                label: 'Stock',
-                data: values,
+                label: 'Stock by Location',
+                data: values.length ? values : [0],
                 backgroundColor: '#007bff'
             }]
         },
@@ -359,7 +376,7 @@ function renderCharts(data){
         }
     });
 
-    // PIE (NOW ALWAYS SHOWS)
+    // PIE CHART (FIXED + ALWAYS SHOWS DATA)
     const ctx2 = document.getElementById('pieChart');
 
     if(pieChartInstance) pieChartInstance.destroy();
@@ -367,10 +384,17 @@ function renderCharts(data){
     pieChartInstance = new Chart(ctx2, {
         type: 'pie',
         data: {
-            labels: typeLabels,
+            labels: typeLabels.length ? typeLabels : ["No Data"],
             datasets: [{
-                data: typeValues,
-                backgroundColor: ['#007bff','#28a745','#ffc107','#dc3545','#6f42c1']
+                data: typeValues.length ? typeValues : [1],
+                backgroundColor: [
+                    '#007bff',
+                    '#28a745',
+                    '#ffc107',
+                    '#dc3545',
+                    '#6f42c1',
+                    '#20c997'
+                ]
             }]
         },
         options: {
@@ -379,9 +403,10 @@ function renderCharts(data){
             animation:false
         }
     });
+
 }
 
-/* SEARCH */
+/* SEARCH WITH IMAGE */
 let searchTimeout;
 
 $('#search').on('input', function(){
@@ -400,11 +425,25 @@ searchTimeout = setTimeout(()=>{
 
     const res = (dashboardData.items||[]).filter(i =>
         i.name.toLowerCase().includes(term) ||
-        i.location.toLowerCase().includes(term)
+        i.location.toLowerCase().includes(term) ||
+        i.type.toLowerCase().includes(term)
     );
 
     box.html(res.map(i=>`
-        <div><b>${i.name}</b><br><small>${i.location}</small></div>
+        <div style="display:flex;gap:10px;align-items:center;padding:8px;border-bottom:1px solid #eee;">
+            
+            ${i.image ? `
+                <img src="${i.image}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">
+            ` : `
+                <div style="width:40px;height:40px;background:#ddd;border-radius:6px;"></div>
+            `}
+
+            <div>
+                <b>${i.name}</b><br>
+                <small>${i.type} • ${i.location}</small>
+            </div>
+
+        </div>
     `).join(''));
 
     box.show();

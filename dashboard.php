@@ -18,7 +18,7 @@ if (!isset($_SESSION['admin'])) {
 
 <style>
 
-/* BASE */
+/* ================= MOBILE FIRST ================= */
 body{
     margin:0;
     font-family:Arial,sans-serif;
@@ -35,7 +35,6 @@ body{
     color:#fff;
     padding:10px;
     border-radius:6px;
-    cursor:pointer;
 }
 
 /* SIDEBAR */
@@ -49,7 +48,6 @@ body{
     color:#fff;
     padding:20px;
     transition:0.3s;
-    overflow:auto;
     z-index:1500;
 }
 
@@ -62,10 +60,7 @@ body{
     text-decoration:none;
 }
 
-.sidebar a:hover{
-    background:#007bff;
-    color:#fff;
-}
+.sidebar a:hover{ background:#007bff; color:#fff; }
 
 /* OVERLAY */
 .overlay{
@@ -76,53 +71,59 @@ body{
     background:rgba(0,0,0,0.4);
     z-index:1400;
 }
-
 .overlay.show{ display:block; }
 
 /* MAIN */
 .main{
-    padding:15px;
+    padding:12px;
 }
 
-/* GRID */
+/* CARDS GRID */
 .summary-cards{
     display:grid;
     grid-template-columns:1fr;
-    gap:15px;
+    gap:12px;
 }
 
 .summary-card{
     background:#fff;
-    padding:15px;
+    padding:12px;
     border-radius:10px;
     text-align:center;
     box-shadow:0 2px 10px rgba(0,0,0,0.05);
 }
 
+/* CARD */
 .card{
     background:#fff;
-    padding:15px;
+    padding:12px;
     border-radius:10px;
-    margin-top:15px;
+    margin-top:12px;
     box-shadow:0 2px 10px rgba(0,0,0,0.05);
+}
+
+/* TABLE WRAPPER (IMPORTANT FIX) */
+.table-wrapper{
+    width:100%;
+    overflow-x:auto;
 }
 
 /* TABLE */
 table{
     width:100%;
     border-collapse:collapse;
+    min-width:600px;
 }
 
 th,td{
-    padding:10px;
+    padding:8px;
     border:1px solid #ddd;
     text-align:center;
+    font-size:14px;
 }
 
 /* SEARCH */
-.search-container{
-    position:relative;
-}
+.search-container{ position:relative; }
 
 #search{
     width:100%;
@@ -139,38 +140,55 @@ th,td{
     background:#fff;
     border:1px solid #ddd;
     display:none;
-    max-height:250px;
+    max-height:200px;
     overflow:auto;
     z-index:999;
 }
 
+/* IMAGE */
 .item-img{
-    width:40px;
-    height:40px;
+    width:38px;
+    height:38px;
     object-fit:cover;
     border-radius:6px;
 }
 
+/* BUTTON */
 .btn{
-    padding:6px 10px;
+    padding:5px 8px;
     border-radius:5px;
     color:#fff;
     text-decoration:none;
-    font-size:12px;
+    font-size:11px;
 }
-
 .btn-edit{ background:#007bff; }
 .btn-delete{ background:#dc3545; }
 
+/* CHART FIX (IMPORTANT) */
+canvas{
+    width:100% !important;
+    height:260px !important;
+}
+
+/* ================= DESKTOP ================= */
 @media(min-width:768px){
+
+    .menu-btn{ display:none; }
+
     .sidebar{ left:0; }
-    .main{ margin-left:240px; padding:25px; }
+
+    .main{
+        margin-left:240px;
+        padding:25px;
+    }
 
     .summary-cards{
         grid-template-columns:repeat(3,1fr);
     }
 
-    .menu-btn{ display:none; }
+    canvas{
+        height:320px !important;
+    }
 }
 
 </style>
@@ -193,7 +211,7 @@ th,td{
 
 <div class="main">
 
-<h2>Welcome <?= htmlspecialchars($_SESSION['admin']) ?></h2>
+<h3>Welcome <?= htmlspecialchars($_SESSION['admin']) ?></h3>
 
 <div class="search-container">
     <input type="text" id="search" placeholder="Search items...">
@@ -214,14 +232,14 @@ th,td{
 
 <div class="card" id="low-stock"></div>
 
-<div class="card" id="inventory-section"></div>
+<div class="card table-wrapper" id="inventory-section"></div>
 
-<div class="card">
+<div class="card table-wrapper">
     <h3>Locations</h3>
     <table id="locations-table"></table>
 </div>
 
-<div class="card" id="recent-transfers"></div>
+<div class="card table-wrapper" id="recent-transfers"></div>
 
 </div>
 
@@ -232,7 +250,7 @@ let barChartInstance = null;
 let pieChartInstance = null;
 let lastHash = null;
 
-/* LOAD DASHBOARD */
+/* LOAD DATA */
 function loadDashboardData(){
 
 $.get('dashboard_data.php', function(data){
@@ -241,7 +259,7 @@ $.get('dashboard_data.php', function(data){
     if(hash === lastHash) return;
     lastHash = hash;
 
-    dashboardData = data;
+    dashboardData = data || {};
 
     /* SUMMARY */
     $('#summary-cards').html(`
@@ -261,9 +279,7 @@ $.get('dashboard_data.php', function(data){
     $('#inventory-section').html(`
         <h3>Inventory</h3>
         <table>
-        <tr>
-            <th>Img</th><th>Name</th><th>Loc</th><th>Type</th><th>Qty</th><th>Action</th>
-        </tr>
+        <tr><th>Img</th><th>Name</th><th>Loc</th><th>Type</th><th>Qty</th><th>Action</th></tr>
         ${(data.items||[]).map(i=>`
             <tr>
                 <td>${i.image ? `<img class="item-img" src="${i.image}">` : ''}</td>
@@ -273,17 +289,17 @@ $.get('dashboard_data.php', function(data){
                 <td>${i.qty}</td>
                 <td>
                     <a class="btn btn-edit" href="edit_item.php?id=${i.id}">Edit</a>
-                    <a class="btn btn-delete" href="delete_item.php?id=${i.id}" onclick="return confirm('Delete?')">Delete</a>
+                    <a class="btn btn-delete" href="delete_item.php?id=${i.id}" onclick="return confirm('Delete?')">Del</a>
                 </td>
             </tr>
         `).join('')}
         </table>
     `);
 
-    /* LOCATIONS TABLE */
+    /* LOCATIONS */
     $('#locations-table').html(`
         <tr><th>Location</th><th>Total</th></tr>
-        ${(data.chart.labels||[]).map((l,i)=>`
+        ${(data.chart?.labels||[]).map((l,i)=>`
             <tr><td>${l}</td><td>${data.chart.data[i]}</td></tr>
         `).join('')}
     `);
@@ -311,8 +327,15 @@ $.get('dashboard_data.php', function(data){
 
 }
 
-/* CHARTS */
+/* FIXED CHARTS */
 function renderCharts(data){
+
+    // SAFE FALLBACKS (IMPORTANT FIX)
+    const labels = data.chart?.labels || ["No Data"];
+    const values = data.chart?.data || [0];
+
+    const typeLabels = data.typeData?.labels || ["Empty"];
+    const typeValues = data.typeData?.data || [1];
 
     // BAR
     const ctx1 = document.getElementById('barChart');
@@ -322,20 +345,21 @@ function renderCharts(data){
     barChartInstance = new Chart(ctx1, {
         type: 'bar',
         data: {
-            labels: data.chart.labels,
+            labels: labels,
             datasets: [{
                 label: 'Stock',
-                data: data.chart.data,
+                data: values,
                 backgroundColor: '#007bff'
             }]
         },
         options: {
             responsive:true,
+            maintainAspectRatio:false,
             animation:false
         }
     });
 
-    // PIE
+    // PIE (NOW ALWAYS SHOWS)
     const ctx2 = document.getElementById('pieChart');
 
     if(pieChartInstance) pieChartInstance.destroy();
@@ -343,20 +367,21 @@ function renderCharts(data){
     pieChartInstance = new Chart(ctx2, {
         type: 'pie',
         data: {
-            labels: data.typeData?.labels || [],
+            labels: typeLabels,
             datasets: [{
-                data: data.typeData?.data || [],
-                backgroundColor: ['#007bff','#28a745','#ffc107','#dc3545']
+                data: typeValues,
+                backgroundColor: ['#007bff','#28a745','#ffc107','#dc3545','#6f42c1']
             }]
         },
         options: {
             responsive:true,
+            maintainAspectRatio:false,
             animation:false
         }
     });
 }
 
-/* SEARCH (DEBOUNCED) */
+/* SEARCH */
 let searchTimeout;
 
 $('#search').on('input', function(){
@@ -373,7 +398,7 @@ searchTimeout = setTimeout(()=>{
         return;
     }
 
-    const res = dashboardData.items.filter(i =>
+    const res = (dashboardData.items||[]).filter(i =>
         i.name.toLowerCase().includes(term) ||
         i.location.toLowerCase().includes(term)
     );

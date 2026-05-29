@@ -115,6 +115,7 @@ body{
     padding:12px;
     border:1px solid #ccc;
     border-radius:8px;
+    outline:none;
 }
 
 #search-dropdown{
@@ -201,6 +202,7 @@ td{
     color:#fff;
     text-decoration:none;
     font-size:13px;
+    margin:0 2px;
 }
 
 .edit-btn{

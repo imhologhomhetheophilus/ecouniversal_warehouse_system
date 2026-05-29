@@ -1,120 +1,69 @@
 <?php
-
-session_start();
 include 'config/db.php';
-
-header('Content-Type: application/json');
-
-if (!isset($_SESSION['admin'])) {
-    echo json_encode([
-        "error" => "Unauthorized"
-    ]);
-    exit;
-}
+header("Content-Type: application/json");
 
 /* ================= ITEMS ================= */
-
-$stmt = $pdo->query("
-    SELECT
-        id,
-        name,
-        location,
-        type,
-        qty,
-        image
+$items = $pdo->query("
+    SELECT id, name, location, type, qty, image
     FROM items
-    ORDER BY id DESC
-");
+")->fetchAll(PDO::FETCH_ASSOC);
 
-$items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+/* ================= TRANSFERS ================= */
+$transfers = $pdo->query("
+    SELECT item, from_loc, to_loc, qty, date
+    FROM transfers
+    ORDER BY date DESC
+    LIMIT 50
+")->fetchAll(PDO::FETCH_ASSOC);
 
-/* ================= TOTAL QTY ================= */
+/* ================= SUMMARY ================= */
+$totalQty = 0;
+$warehouses = [];
+$shops = [];
 
-$stmt = $pdo->query("
-    SELECT SUM(qty) as totalQty
-    FROM items
-");
+foreach ($items as $i) {
+    $totalQty += (int)$i['qty'];
 
-$totalQty = $stmt->fetch(PDO::FETCH_ASSOC)['totalQty'] ?? 0;
-
-/* ================= COUNTS ================= */
-
-$totalWarehouses = 0;
-$totalShops = 0;
-
-foreach($items as $i){
-
-    if(stripos($i['location'], 'warehouse') !== false){
-        $totalWarehouses++;
-    }
-
-    if(stripos($i['location'], 'shop') !== false){
-        $totalShops++;
+    if (stripos($i['location'], 'warehouse') !== false) {
+        $warehouses[$i['location']] = true;
+    } else {
+        $shops[$i['location']] = true;
     }
 }
 
 /* ================= LOW STOCK ================= */
-
-$stmt = $pdo->query("
-    SELECT *
-    FROM items
-    WHERE qty <= 5
-    ORDER BY qty ASC
-");
-
-$lowStock = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$lowStock = array_values(array_filter($items, function($i){
+    return (int)$i['qty'] <= 5;
+}));
 
 /* ================= CHART DATA ================= */
+$chartLabels = [];
+$chartData = [];
 
-$stmt = $pdo->query("
-    SELECT
-        location,
-        SUM(qty) as total
-    FROM items
-    GROUP BY location
-");
+foreach ($items as $i) {
+    $loc = $i['location'];
 
-$chartRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    if (!isset($chartData[$loc])) {
+        $chartData[$loc] = 0;
+        $chartLabels[] = $loc;
+    }
 
-$labels = [];
-$data = [];
-
-foreach($chartRows as $row){
-
-    $labels[] = $row['location'];
-    $data[] = (int)$row['total'];
+    $chartData[$loc] += (int)$i['qty'];
 }
 
-/* ================= TRANSFERS ================= */
-
-$stmt = $pdo->query("
-    SELECT *
-    FROM transfers
-    ORDER BY date DESC
-    LIMIT 20
-");
-
-$transfers = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-/* ================= OUTPUT ================= */
-
+/* ================= RESPONSE ================= */
 echo json_encode([
-
-    "totalQty" => (int)$totalQty,
-
-    "totalWarehouses" => $totalWarehouses,
-
-    "totalShops" => $totalShops,
-
     "items" => $items,
+    "transfers" => $transfers,
+
+    "totalQty" => $totalQty,
+    "totalWarehouses" => count($warehouses),
+    "totalShops" => count($shops),
 
     "lowStock" => $lowStock,
 
-    "transfers" => $transfers,
-
     "chart" => [
-        "labels" => $labels,
-        "data" => $data
+        "labels" => array_values($chartLabels),
+        "data" => array_values($chartData)
     ]
-
 ]);

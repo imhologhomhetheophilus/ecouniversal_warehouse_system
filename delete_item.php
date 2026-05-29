@@ -1,15 +1,40 @@
 <?php
+
 session_start();
 include 'config/db.php';
 
+/* ================= AUTH ================= */
+
 if (!isset($_SESSION['admin'])) {
-    echo json_encode(["status"=>"error","msg"=>"Unauthorized"]);
+
+    echo json_encode([
+        "status" => "error",
+        "msg" => "Unauthorized"
+    ]);
+
     exit;
 }
 
-$id = (int) $_POST['id'];
+/* ================= VALIDATE ID ================= */
 
-$stmt = $pdo->prepare("DELETE FROM items WHERE id = ?");
+if (!isset($_GET['id']) || empty($_GET['id'])) {
+
+    die("Invalid Item ID");
+}
+
+$id = (int) $_GET['id'];
+
+/* ================= DELETE ================= */
+
+$stmt = $pdo->prepare("
+    DELETE FROM items
+    WHERE id = ?
+");
+
 $stmt->execute([$id]);
 
-echo json_encode(["status"=>"success"]);
+/* ================= REDIRECT ================= */
+
+header("Location: dashboard.php");
+exit;
+?>

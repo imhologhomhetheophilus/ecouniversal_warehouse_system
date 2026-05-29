@@ -2,102 +2,71 @@
 session_start();
 include 'config/db.php';
 
-header("Content-Type: application/json");
-
-/* ================= AUTH ================= */
 if (!isset($_SESSION['admin'])) {
-    echo json_encode([
-        "status" => "error",
-        "msg" => "Unauthorized"
-    ]);
+    header("Location: login.php");
     exit;
 }
 
-/* ================= METHOD CHECK ================= */
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode([
-        "status" => "error",
-        "msg" => "POST request required"
-    ]);
-    exit;
+/* CACHE ITEMS (FAST AUTOCOMPLETE) */
+$itemNames = json_decode(file_get_contents("cache/items.json"), true);
+if(!$itemNames){
+    $stmt = $pdo->query("SELECT DISTINCT name FROM items ORDER BY name");
+    $itemNames = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+    if(!is_dir("cache")) mkdir("cache", 0777, true);
+    file_put_contents("cache/items.json", json_encode($itemNames));
 }
 
-/* ================= INPUTS ================= */
-$id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
-$name = trim($_POST['name'] ?? '');
-$location = trim($_POST['location'] ?? '');
-$type = trim($_POST['type'] ?? '');
-$qty = isset($_POST['qty']) ? (int)$_POST['qty'] : 0;
+/* LOCATIONS */
+$locations = [
+    'Ware Shop2','Warehouse MD','Warehouse Handle','Warehouse MD Opposite',
+    'Warehouse Down','Warehouse Upstair','Warehouse Kugbo','Warehouse Karu',
+    'Shop 1','Pannel Shop','Shop 2','Deidei Warehouse','Deidei Shop'
+];
 
-/* ================= VALIDATION ================= */
-if (!$id || !$name || !$location || !$type) {
-    echo json_encode([
-        "status" => "error",
-        "msg" => "Missing Fields"
-    ]);
-    exit;
-}
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
-/* ================= FETCH EXISTING ITEM ================= */
-$stmt = $pdo->prepare("SELECT * FROM items WHERE id = ?");
-$stmt->execute([$id]);
-$oldItem = $stmt->fetch(PDO::FETCH_ASSOC);
+    $name = trim($_POST['name']);
+    $location = $_POST['location'];
+    $type = $_POST['type'];
+    $qty = (int)$_POST['qty'];
 
-if (!$oldItem) {
-    echo json_encode([
-        "status" => "error",
-        "msg" => "Item Not Found"
-    ]);
-    exit;
-}
+    $image = null;
 
-/* ================= IMAGE HANDLING FIX ================= */
-$image = $oldItem['image'];
+    /* FAST UPLOAD */
+    if (!empty($_FILES['image']['tmp_name'])) {
 
-/* ONLY REPLACE IF NEW IMAGE IS UPLOADED */
-if (!empty($_FILES['image']['tmp_name'])) {
+        $dir = "uploads/";
+        if (!is_dir($dir)) mkdir($dir, 0777, true);
 
-    $dir = "uploads/";
+        $ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
+        $image = $dir . uniqid() . "." . $ext;
 
-    if (!is_dir($dir)) {
-        mkdir($dir, 0777, true);
+        move_uploaded_file($_FILES['image']['tmp_name'], $image);
     }
 
-    $ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
+    /* SINGLE FAST INSERT */
+    $stmt = $pdo->prepare("
+        INSERT INTO items (name, location, type, qty, image)
+        VALUES (:name, :location, :type, :qty, :image)
+    ");
 
-    $image = $dir . uniqid("img_", true) . "." . $ext;
-
-    move_uploaded_file($_FILES['image']['tmp_name'], $image);
-}
-
-/* ================= UPDATE ITEM ================= */
-$stmt = $pdo->prepare("
-    UPDATE items 
-    SET name = ?, location = ?, type = ?, qty = ?, image = ?
-    WHERE id = ?
-");
-
-$success = $stmt->execute([
-    $name,
-    $location,
-    $type,
-    $qty,
-    $image,
-    $id
-]);
-
-/* ================= RESPONSE ================= */
-if ($success) {
-    echo json_encode([
-        "status" => "success",
-        "msg" => "Updated successfully",
-        "image" => $image
+    $stmt->execute([
+        ':name' => $name,
+        ':location' => $location,
+        ':type' => $type,
+        ':qty' => $qty,
+        ':image' => $image
     ]);
-} else {
-    echo json_encode([
-        "status" => "error",
-        "msg" => "Update failed"
-    ]);
+
+    /* UPDATE CACHE */
+    $itemNames[] = $name;
+    file_put_contents("cache/items.json", json_encode(array_values(array_unique($itemNames))));
+
+    echo "<script>
+        alert('Item added successfully');
+        window.location.href='dashboard.php';
+    </script>";
+    exit;
 }
 ?>

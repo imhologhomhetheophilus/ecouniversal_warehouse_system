@@ -19,7 +19,9 @@ if (!isset($_SESSION['admin'])) {
 
 <style>
 
-/* ================= BASE ================= */
+/* RESET */
+*{box-sizing:border-box}
+
 body{
     margin:0;
     font-family:Arial;
@@ -27,22 +29,17 @@ body{
     overflow-x:hidden;
 }
 
-/* ================= SIDEBAR ================= */
+/* SIDEBAR */
 .sidebar{
     position:fixed;
     top:0;
-    left:-260px;
+    left:0;
     width:240px;
     height:100vh;
     background:#1e1e1e;
     color:#fff;
     padding:20px;
-    transition:0.3s;
-    z-index:1001;
-}
-
-.sidebar.open{
-    left:0;
+    overflow-y:auto;
 }
 
 .sidebar a{
@@ -57,7 +54,20 @@ body{
     color:#fff;
 }
 
-/* ================= MENU ================= */
+/* MOBILE SIDEBAR */
+@media(max-width:768px){
+    .sidebar{
+        left:-260px;
+        transition:0.3s;
+        z-index:1000;
+    }
+
+    .sidebar.open{
+        left:0;
+    }
+}
+
+/* MENU */
 .menu-btn{
     position:fixed;
     top:10px;
@@ -66,10 +76,11 @@ body{
     color:#fff;
     padding:10px;
     border-radius:6px;
-    z-index:2002;
+    z-index:2001;
+    cursor:pointer;
 }
 
-/* ================= OVERLAY (FIXED FULL CLICK CONTROL) ================= */
+/* OVERLAY */
 .overlay{
     position:fixed;
     inset:0;
@@ -82,35 +93,44 @@ body{
     display:block;
 }
 
-/* ================= MAIN ================= */
+/* MAIN (IMPORTANT FIX) */
 .main{
-    padding:12px;
+    margin-left:240px;
+    padding:20px;
     transition:0.3s;
 }
 
-/* ================= SUMMARY ================= */
+/* MOBILE MAIN RESET */
+@media(max-width:768px){
+    .main{
+        margin-left:0;
+    }
+}
+
+/* CARDS */
+.card{
+    background:#fff;
+    padding:15px;
+    border-radius:10px;
+    margin-top:15px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.05);
+}
+
+/* SUMMARY */
 .summary{
     display:grid;
-    grid-template-columns:1fr;
+    grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
     gap:10px;
 }
 
 .summary div{
     background:#fff;
-    padding:12px;
+    padding:15px;
     border-radius:10px;
     text-align:center;
 }
 
-/* ================= CARD ================= */
-.card{
-    background:#fff;
-    padding:12px;
-    border-radius:10px;
-    margin-top:12px;
-}
-
-/* ================= TABLE ================= */
+/* TABLE */
 .table-wrapper{
     overflow-x:auto;
 }
@@ -118,7 +138,7 @@ body{
 table{
     width:100%;
     border-collapse:collapse;
-    min-width:650px;
+    min-width:600px;
 }
 
 th,td{
@@ -127,7 +147,7 @@ th,td{
     text-align:center;
 }
 
-/* ================= IMAGE ================= */
+/* IMAGE */
 .item-img{
     width:40px;
     height:40px;
@@ -135,7 +155,11 @@ th,td{
     border-radius:6px;
 }
 
-/* ================= SEARCH ================= */
+/* SEARCH */
+.search-box{
+    position:relative;
+}
+
 #search{
     width:100%;
     padding:10px;
@@ -151,31 +175,12 @@ th,td{
     display:none;
     max-height:250px;
     overflow:auto;
-    z-index:2003;
+    z-index:2000;
 }
 
-/* ================= RESPONSIVE FIX ================= */
-@media(min-width:768px){
-
-    .sidebar{
-        left:0;
-    }
-
-    .overlay{
-        display:none !important;
-    }
-
-    .main{
-        margin-left:260px;
-    }
-
-    .menu-btn{
-        display:none;
-    }
-
-    .summary{
-        grid-template-columns:repeat(3,1fr);
-    }
+canvas{
+    width:100% !important;
+    height:260px !important;
 }
 
 </style>
@@ -199,15 +204,19 @@ th,td{
 
 <h3>Welcome <?= htmlspecialchars($_SESSION['admin']) ?></h3>
 
-<div style="position:relative;">
+<!-- SEARCH -->
+<div class="search-box">
     <input type="text" id="search" placeholder="Search items...">
     <div id="search-dropdown"></div>
 </div>
 
+<!-- SUMMARY -->
 <div class="summary" id="summary"></div>
 
+<!-- LOW STOCK -->
 <div class="card" id="lowStock"></div>
 
+<!-- CHARTS -->
 <div class="card">
     <h3>Stock by Location</h3>
     <canvas id="barChart"></canvas>
@@ -218,8 +227,10 @@ th,td{
     <canvas id="pieChart"></canvas>
 </div>
 
+<!-- INVENTORY -->
 <div class="card table-wrapper" id="inventory"></div>
 
+<!-- TRANSFER HISTORY -->
 <div class="card table-wrapper">
     <h3>Transfer History</h3>
     <table id="transferTable">
@@ -280,14 +291,12 @@ $.get("dashboard_data.php", function(data){
         </table>
     `);
 
-    /* TRANSFER */
-    let transfers = data.transfers || [];
-
+    /* TRANSFERS */
     $('#transferTable').html(`
         <tr>
             <th>Item</th><th>From</th><th>To</th><th>Qty</th><th>Date</th>
         </tr>
-        ${transfers.map(t=>`
+        ${(data.transfers||[]).map(t=>`
         <tr>
             <td>${t.item}</td>
             <td>${t.from_loc}</td>
@@ -311,9 +320,8 @@ let labels = data.chart?.labels || [];
 let values = data.chart?.data || [];
 
 let typeMap = {};
-
 (data.items||[]).forEach(i=>{
-    typeMap[i.type] = (typeMap[i.type]||0) + parseInt(i.qty||0);
+    typeMap[i.type] = (typeMap[i.type]||0)+parseInt(i.qty||0);
 });
 
 if(barChart) barChart.destroy();
@@ -362,7 +370,7 @@ $("#search-dropdown").html(res.map(i=>`
 
 });
 
-/* FIXED MENU TOGGLE */
+/* MENU FIX */
 $(".menu-btn").click(function(){
     $(".sidebar").addClass("open");
     $(".overlay").addClass("show");

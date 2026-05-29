@@ -2,82 +2,51 @@
 session_start();
 include 'config/db.php';
 
-header("Content-Type: application/json");
-
 if (!isset($_SESSION['admin'])) {
-    echo json_encode(["status" => "error", "msg" => "Unauthorized"]);
+    header("Location: login.php");
     exit;
 }
 
-/* ================= LOAD ITEM ================= */
-if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+/* ================= GET ITEM ================= */
+$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
-    $id = $_GET['id'] ?? null;
+$stmt = $pdo->prepare("SELECT * FROM items WHERE id = ?");
+$stmt->execute([$id]);
+$item = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if (!$id || !is_numeric($id)) {
-        echo json_encode(["status" => "error", "msg" => "Invalid ID"]);
-        exit;
-    }
-
-    $stmt = $pdo->prepare("SELECT * FROM items WHERE id = ?");
-    $stmt->execute([$id]);
-    $item = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if (!$item) {
-        echo json_encode(["status" => "error", "msg" => "Not found"]);
-        exit;
-    }
-
-    echo json_encode(["status" => "success", "data" => $item]);
-    exit;
+if (!$item) {
+    die("Item not found");
 }
 
-/* ================= UPDATE ITEM ================= */
+/* ================= UPDATE ================= */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    $id = $_POST['id'] ?? null;
-
-    if (!$id || !is_numeric($id)) {
-        echo json_encode(["status" => "error", "msg" => "Invalid ID"]);
-        exit;
-    }
-
-    $name = $_POST['name'] ?? '';
-    $location = $_POST['location'] ?? '';
-    $type = $_POST['type'] ?? '';
-    $qty = (int)($_POST['qty'] ?? 0);
-
-    /* GET CURRENT IMAGE */
-    $stmt = $pdo->prepare("SELECT image FROM items WHERE id = ?");
-    $stmt->execute([$id]);
-    $current = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if (!$current) {
-        echo json_encode(["status" => "error", "msg" => "Item not found"]);
-        exit;
-    }
-
-    $image = $current['image'];
-
-    /* NEW IMAGE (OPTIONAL) */
-    if (!empty($_FILES['image']['tmp_name'])) {
-
-        $dir = "uploads/";
-        if (!is_dir($dir)) mkdir($dir, 0777, true);
-
-        $ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
-        $image = $dir . uniqid() . "." . $ext;
-
-        move_uploaded_file($_FILES['image']['tmp_name'], $image);
-    }
+    $id = (int)$_POST['id'];
+    $name = $_POST['name'];
+    $location = $_POST['location'];
+    $type = $_POST['type'];
+    $qty = (int)$_POST['qty'];
 
     $stmt = $pdo->prepare("
         UPDATE items 
-        SET name=?, location=?, type=?, qty=?, image=?
+        SET name=?, location=?, type=?, qty=? 
         WHERE id=?
     ");
 
-    $stmt->execute([$name, $location, $type, $qty, $image, $id]);
+    $stmt->execute([$name, $location, $type, $qty, $id]);
 
-    echo json_encode(["status" => "success"]);
+    header("Location: dashboard.php");
+    exit;
 }
+?>
+
+<form method="POST">
+    <input type="hidden" name="id" value="<?= $item['id'] ?>">
+
+    <input name="name" value="<?= $item['name'] ?>" required>
+    <input name="location" value="<?= $item['location'] ?>" required>
+    <input name="type" value="<?= $item['type'] ?>" required>
+    <input name="qty" value="<?= $item['qty'] ?>" required>
+
+    <button type="submit">Update</button>
+</form>

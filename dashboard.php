@@ -11,9 +11,7 @@ if (!isset($_SESSION['admin'])) {
 <!DOCTYPE html>
 <html>
 <head>
-
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
 <title>Inventory Dashboard</title>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -21,34 +19,39 @@ if (!isset($_SESSION['admin'])) {
 
 <style>
 
-/* ===== RESET ===== */
-*{box-sizing:border-box}
-
-body{
+/* ================= BASE ================= */
+*{
+    box-sizing:border-box;
     margin:0;
-    font-family:Arial;
-    background:#f4f6f9;
+    padding:0;
 }
 
-/* ===== SIDEBAR ===== */
+body{
+    font-family:Arial, sans-serif;
+    background:#f4f6f9;
+    overflow-x:hidden;
+}
+
+/* ================= SIDEBAR ================= */
 .sidebar{
     position:fixed;
     top:0;
     left:0;
     width:240px;
     height:100vh;
-    background:#1e1e1e;
+    background:#111;
     color:#fff;
     padding:20px;
-    overflow:auto;
-    z-index:1000;
+    transition:0.3s;
 }
 
 .sidebar a{
     display:block;
-    padding:10px;
+    padding:12px;
     color:#ccc;
     text-decoration:none;
+    border-radius:6px;
+    margin-bottom:5px;
 }
 
 .sidebar a:hover{
@@ -56,199 +59,360 @@ body{
     color:#fff;
 }
 
-/* ===== MENU ===== */
+/* ================= MOBILE SIDEBAR ================= */
 .menu-btn{
     display:none;
     position:fixed;
     top:10px;
     left:10px;
-    background:#222;
+    background:#111;
     color:#fff;
-    padding:10px;
+    padding:10px 14px;
     border-radius:6px;
     z-index:2000;
+    cursor:pointer;
 }
 
-/* MOBILE */
-@media(max-width:768px){
-    .sidebar{left:-260px;transition:0.3s}
-    .sidebar.open{left:0}
-    .menu-btn{display:block}
+.overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.4);
+    display:none;
+    z-index:1000;
 }
 
-/* ===== MAIN ===== */
+.overlay.show{ display:block; }
+
+/* ================= MAIN ================= */
 .main{
     margin-left:240px;
     padding:20px;
 }
 
-@media(max-width:768px){
-    .main{margin-left:0}
+/* ================= SUMMARY ================= */
+.summary{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+    gap:12px;
+    margin-top:15px;
 }
 
-/* ===== CARD ===== */
+.summary div{
+    background:#fff;
+    padding:15px;
+    border-radius:10px;
+    text-align:center;
+}
+
+/* ================= CARD ================= */
 .card{
     background:#fff;
-    padding:20px;
-    margin-top:20px;
-    border-radius:12px;
+    padding:15px;
+    border-radius:10px;
+    margin-top:15px;
 }
 
-/* ===== TABLE ===== */
+/* ================= TABLE ================= */
 table{
     width:100%;
     border-collapse:collapse;
 }
 
 th,td{
-    border:1px solid #ddd;
     padding:10px;
+    border-bottom:1px solid #eee;
     text-align:center;
 }
 
-/* ===== IMAGE ===== */
+th{
+    background:#007bff;
+    color:#fff;
+}
+
+/* ================= IMAGE ================= */
 .item-img{
-    width:45px;
-    height:45px;
+    width:40px;
+    height:40px;
     object-fit:cover;
     border-radius:6px;
 }
 
-/* ===== BUTTONS ===== */
-.btn{
-    padding:6px 10px;
-    border-radius:6px;
-    color:#fff;
-    border:none;
-    cursor:pointer;
-    margin:0 4px;
+/* ================= SEARCH ================= */
+.search-box{
+    position:relative;
 }
 
-.edit-btn{background:#28a745}
-.delete-btn{background:#dc3545}
+#search{
+    width:100%;
+    padding:12px;
+    border:1px solid #ccc;
+    border-radius:8px;
+}
+
+#search-dropdown{
+    position:absolute;
+    width:100%;
+    background:#fff;
+    border:1px solid #ddd;
+    max-height:250px;
+    overflow:auto;
+    display:none;
+    z-index:2000;
+}
+
+/* ================= BUTTONS ================= */
+.btn{
+    padding:6px 10px;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+    color:#fff;
+    font-size:13px;
+    margin:0 3px;
+}
+
+.edit-btn{ background:#28a745; }
+.delete-btn{ background:#dc3545; }
+
+/* ================= MOBILE ================= */
+@media(max-width:768px){
+
+    .sidebar{
+        left:-260px;
+    }
+
+    .sidebar.open{
+        left:0;
+    }
+
+    .menu-btn{
+        display:block;
+    }
+
+    .main{
+        margin-left:0;
+        padding-top:60px;
+    }
+}
 
 </style>
-
 </head>
 
 <body>
 
-<div class="menu-btn">☰</div>
+<div class="menu-btn">☰ Menu</div>
+<div class="overlay"></div>
 
+<!-- SIDEBAR -->
 <div class="sidebar">
-    <h3>Inventory</h3>
+    <h3>Inventory System</h3>
     <a href="dashboard.php">Dashboard</a>
     <a href="add_item.php">Add Item</a>
     <a href="transfer.php">Transfer</a>
     <a href="transfer_history.php">History</a>
+    <a href="logout.php">Logout</a>
 </div>
 
+<!-- MAIN -->
 <div class="main">
 
 <h2>Welcome <?= htmlspecialchars($_SESSION['admin']) ?></h2>
 
-<input id="search" placeholder="Search items..." style="width:100%;padding:10px;margin-top:10px">
+<!-- SEARCH -->
+<div class="search-box">
+    <input type="text" id="search" placeholder="Search items...">
+    <div id="search-dropdown"></div>
+</div>
 
+<!-- SUMMARY -->
+<div class="summary" id="summary"></div>
+
+<!-- LOW STOCK -->
+<div class="card" id="lowStock"></div>
+
+<!-- CHARTS -->
+<div class="card">
+    <h3>Stock by Location</h3>
+    <canvas id="barChart"></canvas>
+</div>
+
+<div class="card">
+    <h3>Type Distribution</h3>
+    <canvas id="pieChart"></canvas>
+</div>
+
+<!-- INVENTORY -->
 <div class="card" id="inventory"></div>
+
+<!-- TRANSFERS -->
+<div class="card">
+    <h3>Transfer History</h3>
+    <table id="transferTable"></table>
+</div>
 
 </div>
 
 <script>
 
 let dataStore = {};
+let barChart, pieChart;
 
-/* LOAD DATA */
+/* ================= LOAD ================= */
 function loadDashboard(){
 
 $.getJSON("dashboard_data.php", function(data){
 
-    dataStore = data;
+    dataStore = data || {};
 
-    let items = data.items || [];
+    /* SUMMARY */
+    $('#summary').html(`
+        <div><h3>${data.totalQty ?? 0}</h3><p>Total Qty</p></div>
+        <div><h3>${data.totalWarehouses ?? 0}</h3><p>Warehouses</p></div>
+        <div><h3>${data.totalShops ?? 0}</h3><p>Shops</p></div>
+    `);
+
+    /* LOW STOCK */
+    $('#lowStock').html(
+        (data.lowStock?.length)
+        ? "<h3>Low Stock</h3>" + data.lowStock.map(i =>
+            `<p style="color:red">${i.name} - ${i.qty}</p>`
+          ).join('')
+        : "<h3>No Low Stock</h3>"
+    );
 
     /* INVENTORY */
-    $("#inventory").html(`
+    $('#inventory').html(`
         <h3>Inventory</h3>
         <table>
         <tr>
-            <th>Image</th><th>Name</th><th>Location</th>
-            <th>Type</th><th>Qty</th><th>Action</th>
+            <th>Img</th>
+            <th>Name</th>
+            <th>Location</th>
+            <th>Type</th>
+            <th>Qty</th>
+            <th>Action</th>
         </tr>
 
-        ${items.map(i=>`
+        ${(data.items || []).map(i => `
         <tr>
             <td>
-                <img src="${i.image || 'assets/no-image.png'}" class="item-img">
+                ${i.image ? `<img src="${i.image}" class="item-img">` : 'No Image'}
             </td>
-            <td>${i.name || ''}</td>
-            <td>${i.location || ''}</td>
-            <td>${i.type || ''}</td>
-            <td>${i.qty || 0}</td>
+            <td>${i.name}</td>
+            <td>${i.location}</td>
+            <td>${i.type}</td>
+            <td>${i.qty}</td>
             <td>
-                <button class="btn edit-btn" onclick="editItem(${i.id})">Edit</button>
-                <button class="btn delete-btn" onclick="deleteItem(${i.id})">Delete</button>
+                <a href="edit_item.php?id=${i.id}" class="btn edit-btn">Edit</a>
+                <a href="delete_item.php?id=${i.id}" class="btn delete-btn"
+                onclick="return confirm('Delete item?')">Delete</a>
             </td>
         </tr>
         `).join('')}
         </table>
     `);
 
+    /* TRANSFERS */
+    $('#transferTable').html(`
+        <tr>
+            <th>Item</th><th>From</th><th>To</th><th>Qty</th><th>Date</th>
+        </tr>
+
+        ${(data.transfers || []).map(t => `
+        <tr>
+            <td>${t.item}</td>
+            <td>${t.from_loc}</td>
+            <td>${t.to_loc}</td>
+            <td>${t.qty}</td>
+            <td>${t.date}</td>
+        </tr>
+        `).join('')}
+    `);
+
+    renderCharts(data);
+
 });
 
 }
 
-/* DELETE */
-function deleteItem(id){
+/* ================= CHARTS ================= */
+function renderCharts(data){
 
-if(!confirm("Delete item?")) return;
+let labels = data.chart?.labels || [];
+let values = data.chart?.data || [];
 
-fetch("delete_item.php",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({id})
-})
-.then(r=>r.json())
-.then(res=>{
-    if(res.status==="success"){
-        loadDashboard();
-    }else{
-        alert(res.msg);
+if(barChart) barChart.destroy();
+if(pieChart) pieChart.destroy();
+
+/* BAR */
+barChart = new Chart(document.getElementById("barChart"), {
+    type:'bar',
+    data:{
+        labels,
+        datasets:[{
+            data:values,
+            backgroundColor:'#007bff'
+        }]
+    }
+});
+
+/* PIE */
+let typeMap = {};
+(data.items || []).forEach(i=>{
+    typeMap[i.type] = (typeMap[i.type]||0) + parseInt(i.qty||0);
+});
+
+pieChart = new Chart(document.getElementById("pieChart"), {
+    type:'pie',
+    data:{
+        labels:Object.keys(typeMap),
+        datasets:[{
+            data:Object.values(typeMap),
+            backgroundColor:['#007bff','#28a745','#ffc107','#dc3545']
+        }]
     }
 });
 
 }
 
-/* EDIT */
-function editItem(id){
+/* ================= SEARCH ================= */
+$("#search").on("input", function(){
 
-let item = dataStore.items.find(i=>i.id==id);
-if(!item) return;
+let val = this.value.toLowerCase();
+if(!val){ $("#search-dropdown").hide(); return; }
 
-let name = prompt("Name",item.name);
-let location = prompt("Location",item.location);
-let type = prompt("Type",item.type);
-let qty = prompt("Qty",item.qty);
+let res = (dataStore.items||[]).filter(i =>
+    i.name.toLowerCase().includes(val) ||
+    i.location.toLowerCase().includes(val) ||
+    i.type.toLowerCase().includes(val)
+);
 
-fetch("edit_item.php",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({id,name,location,type,qty})
-})
-.then(r=>r.json())
-.then(res=>{
-    if(res.status==="success"){
-        loadDashboard();
-    }else{
-        alert(res.msg);
-    }
+$("#search-dropdown").html(
+    res.map(i=>`
+    <div style="padding:10px;border-bottom:1px solid #eee">
+        ${i.image ? `<img src="${i.image}" class="item-img">` : ''}
+        <b>${i.name}</b><br>
+        <small>${i.location} | ${i.qty}</small>
+    </div>
+    `).join('')
+).show();
+
 });
 
-}
+/* ================= MENU ================= */
+$(".menu-btn").click(()=>{
+    $(".sidebar").addClass("open");
+    $(".overlay").addClass("show");
+});
 
-/* MENU */
-$(".menu-btn").click(()=>$(".sidebar").toggleClass("open"));
+$(".overlay").click(()=>{
+    $(".sidebar").removeClass("open");
+    $(".overlay").removeClass("show");
+});
 
+/* INIT */
 loadDashboard();
+setInterval(loadDashboard,15000);
 
 </script>
 

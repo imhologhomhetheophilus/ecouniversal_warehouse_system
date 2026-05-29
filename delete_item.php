@@ -9,7 +9,6 @@ if (!isset($_SESSION['admin'])) {
     exit;
 }
 
-/* ================= GET ID SAFELY ================= */
 $id = $_GET['id'] ?? null;
 
 if (!$id || !is_numeric($id)) {
@@ -23,8 +22,5 @@ try {
 
     echo json_encode(["status" => "success"]);
 } catch (Exception $e) {
-    echo json_encode([
-        "status" => "error",
-        "msg" => $e->getMessage()
-    ]);
+    echo json_encode(["status" => "error", "msg" => $e->getMessage()]);
 }

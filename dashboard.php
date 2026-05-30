@@ -258,6 +258,15 @@ th{
 
 let dataStore = {};
 let barChart, pieChart;
+/* ================= low stock ================= */
+.card-title{
+    margin-bottom:12px;
+    color:#333;
+    font-size:18px;
+    text-align:center;
+    text-transform:uppercase;
+
+}
 
 /* ================= LOAD ================= */
 function loadDashboard(){
@@ -277,7 +286,7 @@ $.getJSON("dashboard_data.php", function(data){
   $('#lowStock').html(
     (data.lowStock?.length)
     ? `
-        <h3>Low Stock</h3>
+        <h3 class="card-title">Low Stock</h3>
         ${data.lowStock.map(i => `
             <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #eee;">
 

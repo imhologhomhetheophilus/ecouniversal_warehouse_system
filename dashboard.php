@@ -199,11 +199,12 @@ th{
 /* ================= low stock ================= */
 .card-title{
     margin-bottom:12px;
-    color:#333;
     font-size:18px;
     text-align:center;
     text-transform:uppercase;
-
+    background:red;
+    color:#fff;
+    padding:8px;
 }
 
 </style>
@@ -248,8 +249,8 @@ th{
 </div>
 
 <div class="card">
-    <h3>Type Distribution</h3>
-    <canvas id="pieChart"></canvas>
+    <h3>Stock by Item Type</h3>
+    <canvas id="typeChart"></canvas>
 </div>
 
 <!-- INVENTORY -->
@@ -384,23 +385,31 @@ barChart = new Chart(document.getElementById("barChart"), {
 });
 
 /* PIE */
+if(typeChart) typeChart.destroy();
+
 let typeMap = {};
 (data.items || []).forEach(i=>{
     typeMap[i.type] = (typeMap[i.type]||0) + parseInt(i.qty||0);
 });
 
-pieChart = new Chart(document.getElementById("pieChart"), {
-    type:'pie',
-    data:{
-        labels:Object.keys(typeMap),
-        datasets:[{
-            data:Object.values(typeMap),
-            backgroundColor:['#007bff','#28a745','#ffc107','#dc3545']
+typeChart = new Chart(document.getElementById("typeChart"), {
+    type: 'bar',
+    data: {
+        labels: Object.keys(typeMap),
+        datasets: [{
+            label: 'Total Stock',
+            data: Object.values(typeMap),
+            backgroundColor: '#28a745'
         }]
+    },
+    options: {
+        indexAxis: 'y', // makes it horizontal (more professional for dashboards)
+        responsive: true,
+        plugins: {
+            legend: { display: false }
+        }
     }
 });
-
-}
 
 /* ================= SEARCH ================= */
 $("#search").on("input", function(){

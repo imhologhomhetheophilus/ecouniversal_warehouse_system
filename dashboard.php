@@ -147,6 +147,7 @@ th{
     padding:12px;
     border:1px solid #ccc;
     border-radius:8px;
+    outline:none;
 }
 
 #search-dropdown{
@@ -169,6 +170,7 @@ th{
     color:#fff;
     font-size:13px;
     margin:0 3px;
+    text-decoration:none;
 }
 
 .edit-btn{ background:#28a745; }
@@ -272,13 +274,28 @@ $.getJSON("dashboard_data.php", function(data){
     `);
 
     /* LOW STOCK */
-    $('#lowStock').html(
-        (data.lowStock?.length)
-        ? "<h3>Low Stock</h3>" + data.lowStock.map(i =>
-            `<p style="color:red">${i.name} - ${i.qty}</p>`
-          ).join('')
-        : "<h3>No Low Stock</h3>"
-    );
+  $('#lowStock').html(
+    (data.lowStock?.length)
+    ? `
+        <h3>Low Stock</h3>
+        ${data.lowStock.map(i => `
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #eee;">
+
+                ${i.image
+                    ? `<img src="${i.image}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;">`
+                    : `<div style="width:40px;height:40px;background:#ddd;border-radius:6px;"></div>`
+                }
+
+                <div>
+                    <div><b>${i.name}</b></div>
+                    <small>${i.location} • Qty: ${i.qty}</small>
+                </div>
+
+            </div>
+        `).join('')}
+    `
+    : `<h3>No Low Stock</h3>`
+);
 
     /* INVENTORY */
     $('#inventory').html(`

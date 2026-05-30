@@ -303,6 +303,12 @@ td{
         height:50px;
         border-radius:10px;
     }
+    .header{
+        display:none;
+    }
+    .transfer-row{
+        width:100%;
+    }
 
 }
 
@@ -412,7 +418,7 @@ $.getJSON("dashboard_data.php", function(data){
 $('#inventory').html(`
     <h3>Inventory</h3>
     <table>
-        <tr>
+        <tr class="header">
             <th>Img</th>
             <th>Name</th>
             <th>Location</th>
@@ -457,7 +463,7 @@ $('#inventory').html(`
         </tr>
 
         ${(data.transfers || []).map(t => `
-        <tr>
+        <tr class="transfer-row">
             <td>${t.item}</td>
             <td>${t.from_loc}</td>
             <td>${t.to_loc}</td>

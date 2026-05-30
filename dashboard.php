@@ -408,10 +408,10 @@ $.getJSON("dashboard_data.php", function(data){
     : `<div class="card">No Low Stock</div>`
 );
 
-    /* INVENTORY */
-    $('#inventory').html(`
-        <h3>Inventory</h3>
-        <table>
+/* ================= INVENTORY ================= */
+$('#inventory').html(`
+    <h3>Inventory</h3>
+    <table>
         <tr>
             <th>Img</th>
             <th>Name</th>
@@ -420,31 +420,35 @@ $.getJSON("dashboard_data.php", function(data){
             <th>Qty</th>
             <th>Action</th>
         </tr>
-(data.items || []).map(i => `
-<tr>
 
-    <td data-label="Image">
-        ${i.image ? `<img src="${i.image}" class="item-img">` : 'No Image'}
-    </td>
+        ${(data.items || []).map(i => `
+            <tr>
 
-    <td data-label="Name">${i.name}</td>
+                <td data-label="Image">
+                    ${i.image
+                        ? `<img src="${i.image}" class="item-img">`
+                        : 'No Image'
+                    }
+                </td>
 
-    <td data-label="Location">${i.location}</td>
+                <td data-label="Name">${i.name ?? ''}</td>
 
-    <td data-label="Type">${i.type}</td>
+                <td data-label="Location">${i.location ?? ''}</td>
 
-    <td data-label="Qty">${i.qty}</td>
+                <td data-label="Type">${i.type ?? ''}</td>
 
-    <td data-label="Action">
-        <a href="edit_item.php?id=${i.id}" class="btn edit-btn">Edit</a>
-        <a href="delete_item.php?id=${i.id}" class="btn delete-btn"
-        onclick="return confirm('Delete item?')">Delete</a>
-    </td>
+                <td data-label="Qty">${i.qty ?? 0}</td>
 
-</tr>
-`).join('')}
-        </table>
-    `);
+                <td data-label="Action">
+                    <a href="edit_item.php?id=${i.id}" class="btn edit-btn">Edit</a>
+                    <a href="delete_item.php?id=${i.id}" class="btn delete-btn"
+                    onclick="return confirm('Delete item?')">Delete</a>
+                </td>
+
+            </tr>
+        `).join('')}
+    </table>
+`);
 
     /* TRANSFERS */
     $('#transferTable').html(`

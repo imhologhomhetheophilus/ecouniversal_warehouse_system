@@ -1,67 +1,57 @@
 <?php
 session_start();
 include 'config/db.php';
+include 'includes/upload.php';
 
 if (!isset($_SESSION['admin'])) {
     header("Location: login.php");
     exit;
 }
 
-/* CACHE ITEMS (FAST AUTOCOMPLETE) */
-$itemNames = json_decode(file_get_contents("cache/items.json"), true);
-if(!$itemNames){
-    $stmt = $pdo->query("SELECT DISTINCT name FROM items ORDER BY name");
-    $itemNames = $stmt->fetchAll(PDO::FETCH_COLUMN);
+/* ================= LOCATIONS ================= */
 
-    if(!is_dir("cache")) mkdir("cache", 0777, true);
-    file_put_contents("cache/items.json", json_encode($itemNames));
-}
-
-/* LOCATIONS */
 $locations = [
     'Ware Shop2','Warehouse MD','Warehouse Handle','Warehouse MD Opposite',
     'Warehouse Down','Warehouse Upstair','Warehouse Kugbo','Warehouse Karu',
     'Shop 1','Pannel Shop','Shop 2','Deidei Warehouse','Deidei Shop'
 ];
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+/* ================= HANDLE FORM ================= */
 
-    $name = trim($_POST['name']);
-    $location = $_POST['location'];
-    $type = $_POST['type'];
-    $qty = (int)$_POST['qty'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+    $name = trim($_POST['name'] ?? '');
+    $location = $_POST['location'] ?? '';
+    $type = $_POST['type'] ?? '';
+    $qty = (int)($_POST['qty'] ?? 0);
+
+    if ($name === '' || $location === '' || $type === '') {
+        die("Missing required fields");
+    }
 
     $image = null;
 
-    /* FAST UPLOAD */
+    /* ================= CLOUDINARY UPLOAD ================= */
+
     if (!empty($_FILES['image']['tmp_name'])) {
 
-        $dir = "uploads/";
-        if (!is_dir($dir)) mkdir($dir, 0777, true);
+        $image = uploadToCloudinary($_FILES['image']['tmp_name']);
 
-        $ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
-        $image = $dir . uniqid() . "." . $ext;
-
-        move_uploaded_file($_FILES['image']['tmp_name'], $image);
+        if (!$image) {
+            die("Image upload failed");
+        }
     }
 
-    /* SINGLE FAST INSERT */
+    /* ================= INSERT INTO DATABASE ================= */
+
     $stmt = $pdo->prepare("
         INSERT INTO items (name, location, type, qty, image)
-        VALUES (:name, :location, :type, :qty, :image)
+        VALUES (?, ?, ?, ?, ?)
     ");
 
-    $stmt->execute([
-        ':name' => $name,
-        ':location' => $location,
-        ':type' => $type,
-        ':qty' => $qty,
-        ':image' => $image
-    ]);
+    $stmt->execute([$name, $location, $type, $qty, $image]);
 
-    /* UPDATE CACHE */
-    $itemNames[] = $name;
-    file_put_contents("cache/items.json", json_encode(array_values(array_unique($itemNames))));
+    /* ================= SUCCESS ================= */
 
     echo "<script>
         alert('Item added successfully');
@@ -70,3 +60,81 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     exit;
 }
 ?>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Item</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style>
+        body{
+            font-family:Arial;
+            background:#f4f6f9;
+            padding:20px;
+        }
+
+        .box{
+            max-width:500px;
+            background:#fff;
+            padding:20px;
+            border-radius:10px;
+            margin:auto;
+            box-shadow:0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        input, select{
+            width:100%;
+            padding:10px;
+            margin-bottom:10px;
+            border:1px solid #ccc;
+            border-radius:6px;
+        }
+
+        button{
+            width:100%;
+            padding:10px;
+            background:#007bff;
+            color:#fff;
+            border:none;
+            border-radius:6px;
+            cursor:pointer;
+        }
+
+        button:hover{
+            background:#0056b3;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="box">
+
+    <h2>Add Item</h2>
+
+    <form method="POST" enctype="multipart/form-data">
+
+        <input type="text" name="name" placeholder="Item Name" required>
+
+        <select name="location" required>
+            <option value="">Select Location</option>
+            <?php foreach($locations as $loc): ?>
+                <option value="<?= $loc ?>"><?= $loc ?></option>
+            <?php endforeach; ?>
+        </select>
+
+        <input type="text" name="type" placeholder="Type" required>
+
+        <input type="number" name="qty" placeholder="Quantity" required>
+
+        <input type="file" name="image" accept="image/*">
+
+        <button type="submit">Add Item</button>
+
+    </form>
+
+</div>
+
+</body>
+</html>

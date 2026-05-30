@@ -12,7 +12,7 @@ if (!isset($_SESSION['admin'])) {
 <html lang="en">
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Inventory Dashboard</title>
+<title>Eco Universal Limited Warehouse Dashboard</title>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -217,7 +217,7 @@ th{
 
 <!-- SIDEBAR -->
 <div class="sidebar">
-    <h3>Inventory System</h3>
+    <h3>Eco Universal Limited Warehouse</h3>
     <a href="dashboard.php">Dashboard</a>
     <a href="add_item.php">Add Item</a>
     <a href="transfer.php">Transfer</a>

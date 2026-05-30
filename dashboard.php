@@ -267,7 +267,7 @@ th{
 <script>
 
 let dataStore = {};
-let barChart, pieChart;
+let barChart, typeChart;
 
 
 /* ================= LOAD ================= */
@@ -366,51 +366,59 @@ $.getJSON("dashboard_data.php", function(data){
 /* ================= CHARTS ================= */
 function renderCharts(data){
 
-let labels = data.chart?.labels || [];
-let values = data.chart?.data || [];
+    let labels = data.chart?.labels || [];
+    let values = data.chart?.data || [];
 
-if(barChart) barChart.destroy();
-if(pieChart) pieChart.destroy();
-
-/* BAR */
-barChart = new Chart(document.getElementById("barChart"), {
-    type:'bar',
-    data:{
-        labels,
-        datasets:[{
-            data:values,
-            backgroundColor:'#007bff'
-        }]
+    // safely destroy charts
+    if (barChart) {
+        barChart.destroy();
+        barChart = null;
     }
-});
 
-/* PIE */
-if(typeChart) typeChart.destroy();
+    if (typeChart) {
+        typeChart.destroy();
+        typeChart = null;
+    }
 
-let typeMap = {};
-(data.items || []).forEach(i=>{
-    typeMap[i.type] = (typeMap[i.type]||0) + parseInt(i.qty||0);
-});
-
-typeChart = new Chart(document.getElementById("typeChart"), {
-    type: 'bar',
-    data: {
-        labels: Object.keys(typeMap),
-        datasets: [{
-            label: 'Total Stock',
-            data: Object.values(typeMap),
-            backgroundColor: '#28a745'
-        }]
-    },
-    options: {
-        indexAxis: 'y', // makes it horizontal (more professional for dashboards)
-        responsive: true,
-        plugins: {
-            legend: { display: false }
+    /* ================= BAR CHART ================= */
+    barChart = new Chart(document.getElementById("barChart"), {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{
+                data: values,
+                backgroundColor: '#007bff'
+            }]
         }
-    }
-});
+    });
 
+    /* ================= TYPE CHART ================= */
+    let typeMap = {};
+
+    (data.items || []).forEach(i => {
+        let key = i.type || 'Unknown';
+        typeMap[key] = (typeMap[key] || 0) + parseInt(i.qty || 0);
+    });
+
+    typeChart = new Chart(document.getElementById("typeChart"), {
+        type: 'bar',
+        data: {
+            labels: Object.keys(typeMap),
+            datasets: [{
+                label: 'Total Stock',
+                data: Object.values(typeMap),
+                backgroundColor: '#28a745'
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+}
 /* ================= SEARCH ================= */
 $("#search").on("input", function(){
 

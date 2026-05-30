@@ -44,7 +44,7 @@ $transfers = $stmt->fetchAll();
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
 

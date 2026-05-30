@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] == "POST") {
 ?>
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Admin Login</title>
@@ -92,7 +92,7 @@ button{
     margin-top:15px;
     border:none;
     border-radius:8px;
-    background:#28a745;
+    background:#007bff;
     color:#fff;
     font-size:1rem;
     cursor:pointer;
@@ -100,7 +100,7 @@ button{
 }
 
 button:hover{
-    background:#218838;
+    background:#0056b3;
 }
 
 /* message */
@@ -130,6 +130,7 @@ p{
 </head>
 
 <body>
+    <main>
 
 <div class="card">
 
@@ -144,6 +145,7 @@ p{
     <p><?php echo $msg; ?></p>
 
 </div>
+    </main>
 
 </body>
 </html>

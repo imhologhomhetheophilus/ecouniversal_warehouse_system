@@ -196,6 +196,15 @@ th{
         padding-top:60px;
     }
 }
+/* ================= low stock ================= */
+.card-title{
+    margin-bottom:12px;
+    color:#333;
+    font-size:18px;
+    text-align:center;
+    text-transform:uppercase;
+
+}
 
 </style>
 </head>
@@ -258,15 +267,7 @@ th{
 
 let dataStore = {};
 let barChart, pieChart;
-/* ================= low stock ================= */
-.card-title{
-    margin-bottom:12px;
-    color:#333;
-    font-size:18px;
-    text-align:center;
-    text-transform:uppercase;
 
-}
 
 /* ================= LOAD ================= */
 function loadDashboard(){

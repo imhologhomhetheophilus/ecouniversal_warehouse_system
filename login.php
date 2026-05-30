@@ -93,8 +93,9 @@ button{
     border:none;
     border-radius:8px;
     background:#007bff;
-    color:#fff;
+    color:#000;
     font-size:1rem;
+    text-transform:uppercase;
     cursor:pointer;
     transition:0.2s ease;
 }

@@ -258,7 +258,54 @@ td{
     table{
         font-size:12px;
     }
+    /* ================= INVENTORY RESPONSIVE ================= */
+
+
+    #inventory table,
+    #inventory thead,
+    #inventory tbody,
+    #inventory th,
+    #inventory td,
+    #inventory tr{
+        display:block;
+        width:100%;
+    }
+
+    #inventory thead{
+        display:none;
+    }
+
+    #inventory tr{
+        background:#fff;
+        margin-bottom:12px;
+        border-radius:14px;
+        box-shadow:0 6px 16px rgba(0,0,0,0.05);
+        padding:10px;
+    }
+
+    #inventory td{
+        text-align:left;
+        padding:8px 10px;
+        border:none;
+        display:flex;
+        justify-content:space-between;
+        font-size:13px;
+    }
+
+    #inventory td::before{
+        content:attr(data-label);
+        font-weight:600;
+        color:#6b7280;
+    }
+
+    #inventory .item-img{
+        width:50px;
+        height:50px;
+        border-radius:10px;
+    }
+
 }
+
 
 </style>
 </head>
@@ -373,23 +420,29 @@ $.getJSON("dashboard_data.php", function(data){
             <th>Qty</th>
             <th>Action</th>
         </tr>
+(data.items || []).map(i => `
+<tr>
 
-        ${(data.items || []).map(i => `
-        <tr>
-            <td>
-                ${i.image ? `<img src="${i.image}" class="item-img">` : 'No Image'}
-            </td>
-            <td>${i.name}</td>
-            <td>${i.location}</td>
-            <td>${i.type}</td>
-            <td>${i.qty}</td>
-            <td>
-                <a href="edit_item.php?id=${i.id}" class="btn edit-btn">Edit</a>
-                <a href="delete_item.php?id=${i.id}" class="btn delete-btn"
-                onclick="return confirm('Delete item?')">Delete</a>
-            </td>
-        </tr>
-        `).join('')}
+    <td data-label="Image">
+        ${i.image ? `<img src="${i.image}" class="item-img">` : 'No Image'}
+    </td>
+
+    <td data-label="Name">${i.name}</td>
+
+    <td data-label="Location">${i.location}</td>
+
+    <td data-label="Type">${i.type}</td>
+
+    <td data-label="Qty">${i.qty}</td>
+
+    <td data-label="Action">
+        <a href="edit_item.php?id=${i.id}" class="btn edit-btn">Edit</a>
+        <a href="delete_item.php?id=${i.id}" class="btn delete-btn"
+        onclick="return confirm('Delete item?')">Delete</a>
+    </td>
+
+</tr>
+`).join('')}
         </table>
     `);
 

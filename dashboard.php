@@ -20,92 +20,226 @@ if (!isset($_SESSION['admin'])) {
 <style>
 
 /* ================= BASE ================= */
+/* ================= RESET ================= */
 *{
     box-sizing:border-box;
     margin:0;
     padding:0;
+    font-family: 'Segoe UI', system-ui, sans-serif;
 }
 
 body{
-    font-family:Arial, sans-serif;
-    background:#f4f6f9;
+    background:#f5f7fb;
+    color:#111;
     overflow-x:hidden;
 }
 
-/* ================= SIDEBAR ================= */
-.sidebar{
-    position:fixed;
-    top:0;
-    left:0;
-    width:240px;
-    height:100vh;
-    background:#111;
-    color:#fff;
-    padding:20px;
-    transition:0.3s ease;
-    z-index:1002;
-    overflow-y:auto;
-}
-
-.sidebar h3{
-    margin-bottom:15px;
-}
-
-.sidebar a{
-    display:block;
-    padding:12px;
-    color:#ccc;
-    text-decoration:none;
-    border-radius:6px;
-    margin-bottom:5px;
-    transition:0.2s;
-}
-
-.sidebar a:hover{
-    background:#007bff;
-    color:#fff;
-}
-
-/* ================= OVERLAY ================= */
-.overlay{
-    position:fixed;
-    inset:0;
-    background:rgba(0,0,0,0.55);
-    display:none;
-    z-index:1000;
-}
-
-.overlay.show{
-    display:block;
-}
-
-/* ================= MENU BUTTON ================= */
-.menu-btn{
-    display:none;
-    position:fixed;
-    top:10px;
-    left:10px;
-    background:#111;
-    color:#fff;
-    padding:10px 14px;
-    border-radius:6px;
-    z-index:1100;
-    cursor:pointer;
-}
-
-/* ================= MAIN ================= */
+/* ================= LAYOUT ================= */
 .main{
-    margin-left:240px;
+    margin-left:260px;
     padding:20px;
     transition:0.3s;
 }
 
-/* ================= MOBILE RESPONSIVE ================= */
+/* ================= SIDEBAR (MODERN GLASS) ================= */
+.sidebar{
+    position:fixed;
+    top:0;
+    left:0;
+    width:260px;
+    height:100vh;
+    background:linear-gradient(180deg,#0f172a,#111827);
+    color:#fff;
+    padding:20px;
+    z-index:1002;
+    transition:0.3s;
+    overflow-y:auto;
+}
+
+.sidebar h3{
+    font-size:18px;
+    margin-bottom:20px;
+    color:#fff;
+}
+
+.sidebar a{
+    display:flex;
+    padding:12px 14px;
+    margin-bottom:6px;
+    border-radius:10px;
+    text-decoration:none;
+    color:#cbd5e1;
+    transition:0.2s;
+    font-size:14px;
+}
+
+.sidebar a:hover{
+    background:rgba(255,255,255,0.08);
+    color:#fff;
+}
+
+/* ================= MOBILE MENU ================= */
+.menu-btn{
+    display:none;
+    position:fixed;
+    top:12px;
+    left:12px;
+    background:#111827;
+    color:#fff;
+    padding:10px 12px;
+    border-radius:10px;
+    z-index:1100;
+    cursor:pointer;
+}
+
+.overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.5);
+    display:none;
+    z-index:1000;
+}
+
+.overlay.show{ display:block; }
+
+/* ================= CARDS ================= */
+.card{
+    background:#fff;
+    border-radius:16px;
+    padding:16px;
+    margin-top:16px;
+    box-shadow:0 8px 20px rgba(0,0,0,0.05);
+}
+
+/* ================= SUMMARY KPI ================= */
+.summary{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+    gap:12px;
+    margin-top:15px;
+}
+
+.summary div{
+    background:#fff;
+    padding:16px;
+    border-radius:14px;
+    box-shadow:0 6px 16px rgba(0,0,0,0.05);
+    text-align:center;
+}
+
+.summary h3{
+    font-size:22px;
+    color:#111827;
+}
+
+.summary p{
+    font-size:12px;
+    color:#6b7280;
+}
+
+/* ================= TABLE ================= */
+table{
+    width:100%;
+    border-collapse:collapse;
+    overflow:hidden;
+    border-radius:12px;
+}
+
+th{
+    background:#111827;
+    color:#fff;
+    padding:12px;
+    font-size:13px;
+}
+
+td{
+    padding:12px;
+    border-bottom:1px solid #eee;
+    text-align:center;
+    font-size:13px;
+}
+
+.item-img{
+    width:40px;
+    height:40px;
+    border-radius:10px;
+    object-fit:cover;
+}
+
+/* ================= SEARCH ================= */
+.search-box{
+    position:relative;
+}
+
+#search{
+    width:100%;
+    padding:14px;
+    border:1px solid #e5e7eb;
+    border-radius:12px;
+    outline:none;
+    background:#fff;
+}
+
+#search-dropdown{
+    position:absolute;
+    width:100%;
+    background:#fff;
+    border-radius:12px;
+    max-height:260px;
+    overflow:auto;
+    display:none;
+    z-index:2000;
+    box-shadow:0 10px 30px rgba(0,0,0,0.1);
+}
+
+/* ================= LOW STOCK MODERN ================= */
+.card-title{
+    font-size:14px;
+    font-weight:600;
+    margin-bottom:12px;
+    color:#ef4444;
+    text-transform:uppercase;
+    letter-spacing:1px;
+}
+
+.low-stock-item{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:10px;
+    border-radius:10px;
+    margin-bottom:8px;
+    background:#fff5f5;
+}
+
+.low-stock-item b{
+    font-size:13px;
+}
+
+.low-stock-item small{
+    color:#6b7280;
+    font-size:12px;
+}
+
+/* ================= BUTTONS ================= */
+.btn{
+    padding:6px 10px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    color:#fff;
+    font-size:12px;
+    text-decoration:none;
+}
+
+.edit-btn{ background:#22c55e; }
+.delete-btn{ background:#ef4444; }
+
+/* ================= MOBILE ================= */
 @media(max-width:768px){
 
     .sidebar{
-        left:-260px;
-        width:260px;
+        left:-280px;
     }
 
     .sidebar.open{
@@ -118,97 +252,12 @@ body{
 
     .main{
         margin-left:0;
-        padding-top:60px;
+        padding-top:70px;
     }
 
-    body.menu-open{
-        overflow:hidden;
+    table{
+        font-size:12px;
     }
-}
-
-/* ================= rest stays unchanged ================= */
-.summary{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
-    gap:12px;
-    margin-top:15px;
-}
-
-.card{
-    background:#fff;
-    padding:15px;
-    border-radius:10px;
-    margin-top:15px;
-}
-
-table{
-    width:100%;
-    border-collapse:collapse;
-}
-
-th,td{
-    padding:10px;
-    border-bottom:1px solid #eee;
-    text-align:center;
-}
-
-th{
-    background:#007bff;
-    color:#fff;
-}
-
-.item-img{
-    width:40px;
-    height:40px;
-    object-fit:cover;
-    border-radius:6px;
-}
-
-.search-box{
-    position:relative;
-}
-
-#search{
-    width:100%;
-    padding:12px;
-    border:1px solid #ccc;
-    border-radius:8px;
-    outline:none;
-}
-
-#search-dropdown{
-    position:absolute;
-    width:100%;
-    background:#fff;
-    border:1px solid #ddd;
-    max-height:250px;
-    overflow:auto;
-    display:none;
-    z-index:2000;
-}
-
-.btn{
-    padding:6px 10px;
-    border:none;
-    border-radius:6px;
-    cursor:pointer;
-    color:#fff;
-    font-size:13px;
-    margin:0 3px;
-    text-decoration:none;
-}
-
-.edit-btn{ background:#28a745; }
-.delete-btn{ background:#dc3545; }
-
-.card-title{
-    margin-bottom:12px;
-    font-size:18px;
-    text-align:center;
-    text-transform:uppercase;
-    background:red;
-    color:#fff;
-    padding:8px;
 }
 
 </style>
@@ -292,24 +341,24 @@ $.getJSON("dashboard_data.php", function(data){
   $('#lowStock').html(
     (data.lowStock?.length)
     ? `
-        <h3 class="card-title">Low Stock</h3>
+        <h3 class="card-title">Low Stock Alert</h3>
         ${data.lowStock.map(i => `
-            <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #eee;">
+            <div class="low-stock-item">
 
                 ${i.image
-                    ? `<img src="${i.image}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;">`
-                    : `<div style="width:40px;height:40px;background:#ddd;border-radius:6px;"></div>`
+                    ? `<img src="${i.image}" class="item-img">`
+                    : `<div style="width:40px;height:40px;background:#e5e7eb;border-radius:10px;"></div>`
                 }
 
                 <div>
-                    <div><b>${i.name}</b></div>
+                    <b>${i.name}</b><br>
                     <small>${i.location} • Qty: ${i.qty}</small>
                 </div>
 
             </div>
         `).join('')}
     `
-    : `<h3>No Low Stock</h3>`
+    : `<div class="card">No Low Stock</div>`
 );
 
     /* INVENTORY */
@@ -451,13 +500,13 @@ $("#search-dropdown").html(
 $(".menu-btn").click(()=>{
     $(".sidebar").addClass("open");
     $(".overlay").addClass("show");
-    $("body").addClass("menu-open");
+    $("body").css("overflow","hidden");
 });
 
 $(".overlay").click(()=>{
     $(".sidebar").removeClass("open");
     $(".overlay").removeClass("show");
-    $("body").removeClass("menu-open");
+    $("body").css("overflow","auto");
 });
 
 /* INIT */

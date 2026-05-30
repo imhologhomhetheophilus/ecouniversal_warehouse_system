@@ -307,7 +307,7 @@ td{
         display:none;
     }
     .transfer-row{
-        width:100%;
+        width:fit-content;
     }
 
 }

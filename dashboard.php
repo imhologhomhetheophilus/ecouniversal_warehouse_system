@@ -42,7 +42,13 @@ body{
     background:#111;
     color:#fff;
     padding:20px;
-    transition:0.3s;
+    transition:0.3s ease;
+    z-index:1002;
+    overflow-y:auto;
+}
+
+.sidebar h3{
+    margin-bottom:15px;
 }
 
 .sidebar a{
@@ -52,6 +58,7 @@ body{
     text-decoration:none;
     border-radius:6px;
     margin-bottom:5px;
+    transition:0.2s;
 }
 
 .sidebar a:hover{
@@ -59,7 +66,20 @@ body{
     color:#fff;
 }
 
-/* ================= MOBILE SIDEBAR ================= */
+/* ================= OVERLAY ================= */
+.overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.55);
+    display:none;
+    z-index:1000;
+}
+
+.overlay.show{
+    display:block;
+}
+
+/* ================= MENU BUTTON ================= */
 .menu-btn{
     display:none;
     position:fixed;
@@ -69,27 +89,44 @@ body{
     color:#fff;
     padding:10px 14px;
     border-radius:6px;
-    z-index:2000;
+    z-index:1100;
     cursor:pointer;
 }
-
-.overlay{
-    position:fixed;
-    inset:0;
-    background:rgba(0,0,0,0.4);
-    display:none;
-    z-index:1000;
-}
-
-.overlay.show{ display:block; }
 
 /* ================= MAIN ================= */
 .main{
     margin-left:240px;
     padding:20px;
+    transition:0.3s;
 }
 
-/* ================= SUMMARY ================= */
+/* ================= MOBILE RESPONSIVE ================= */
+@media(max-width:768px){
+
+    .sidebar{
+        left:-260px;
+        width:260px;
+    }
+
+    .sidebar.open{
+        left:0;
+    }
+
+    .menu-btn{
+        display:block;
+    }
+
+    .main{
+        margin-left:0;
+        padding-top:60px;
+    }
+
+    body.menu-open{
+        overflow:hidden;
+    }
+}
+
+/* ================= rest stays unchanged ================= */
 .summary{
     display:grid;
     grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
@@ -97,14 +134,6 @@ body{
     margin-top:15px;
 }
 
-.summary div{
-    background:#fff;
-    padding:15px;
-    border-radius:10px;
-    text-align:center;
-}
-
-/* ================= CARD ================= */
 .card{
     background:#fff;
     padding:15px;
@@ -112,7 +141,6 @@ body{
     margin-top:15px;
 }
 
-/* ================= TABLE ================= */
 table{
     width:100%;
     border-collapse:collapse;
@@ -129,7 +157,6 @@ th{
     color:#fff;
 }
 
-/* ================= IMAGE ================= */
 .item-img{
     width:40px;
     height:40px;
@@ -137,7 +164,6 @@ th{
     border-radius:6px;
 }
 
-/* ================= SEARCH ================= */
 .search-box{
     position:relative;
 }
@@ -161,7 +187,6 @@ th{
     z-index:2000;
 }
 
-/* ================= BUTTONS ================= */
 .btn{
     padding:6px 10px;
     border:none;
@@ -176,27 +201,6 @@ th{
 .edit-btn{ background:#28a745; }
 .delete-btn{ background:#dc3545; }
 
-/* ================= MOBILE ================= */
-@media(max-width:768px){
-
-    .sidebar{
-        left:-260px;
-    }
-
-    .sidebar.open{
-        left:0;
-    }
-
-    .menu-btn{
-        display:block;
-    }
-
-    .main{
-        margin-left:0;
-        padding-top:60px;
-    }
-}
-/* ================= low stock ================= */
 .card-title{
     margin-bottom:12px;
     font-size:18px;
@@ -447,11 +451,13 @@ $("#search-dropdown").html(
 $(".menu-btn").click(()=>{
     $(".sidebar").addClass("open");
     $(".overlay").addClass("show");
+    $("body").addClass("menu-open");
 });
 
 $(".overlay").click(()=>{
     $(".sidebar").removeClass("open");
     $(".overlay").removeClass("show");
+    $("body").removeClass("menu-open");
 });
 
 /* INIT */
